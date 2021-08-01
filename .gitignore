@@ -1,0 +1,10 @@
+/.vs/
+/Library/
+/Logs/
+/Obj/
+
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.log
