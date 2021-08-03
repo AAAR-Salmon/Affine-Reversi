@@ -2,8 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CursorControllerMono : MonoBehaviour {
+public class CursorController : MonoBehaviour {
 	private bool isBlack = true;
+	private GameObject diskPrefab;
+	private GameObject board;
 	[SerializeField] private Color blackColor = Color.black;
 	[SerializeField] private Color whiteColor = Color.white;
 
@@ -13,6 +15,7 @@ public class CursorControllerMono : MonoBehaviour {
 		// Start()時点ではSerializeFieldにおかしな値が格納されてるっぽい
 		// this.GetComponent<SpriteRenderer>().color = blackColor;
 		isBlack = true;
+		diskPrefab = (GameObject) Resources.Load("Prefabs/DiskPrefab");
 	}
 
 	// Update is called once per frame
@@ -33,6 +36,7 @@ public class CursorControllerMono : MonoBehaviour {
 
 		// 石を置いて色を変更する
 		if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
+			Instantiate(diskPrefab, this.transform.position, Quaternion.identity);
 			this.GetComponent<SpriteRenderer>().color = isBlack ? Color.white : Color.black;
 			isBlack = !isBlack;
 		}
