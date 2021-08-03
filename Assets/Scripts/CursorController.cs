@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,8 +11,8 @@ public class CursorController : MonoBehaviour {
 
 	// Start is called before the first frame update
 	void Start() {
-		// ‰½ŒÌ‚©“®‚©‚È‚¢
-		// Start()“_‚Å‚ÍSerializeField‚É‚¨‚©‚µ‚È’l‚ªŠi”[‚³‚ê‚Ä‚é‚Á‚Û‚¢
+		// ä½•æ•…ã‹å‹•ã‹ãªã„
+		// Start()æ™‚ç‚¹ã§ã¯SerializeFieldã«ãŠã‹ã—ãªå€¤ãŒæ ¼ç´ã•ã‚Œã¦ã‚‹ã£ã½ã„
 		// this.GetComponent<SpriteRenderer>().color = blackColor;
 		isBlack = true;
 		diskPrefab = (GameObject) Resources.Load("Prefabs/DiskPrefab");
@@ -20,7 +20,7 @@ public class CursorController : MonoBehaviour {
 
 	// Update is called once per frame
 	void Update() {
-		// ƒL[“ü—Í‚É‚æ‚éˆÚ“®
+		// ã‚­ãƒ¼å…¥åŠ›ã«ã‚ˆã‚‹ç§»å‹•
 		if (Input.GetKeyDown(KeyCode.UpArrow)) {
 			this.transform.position += new Vector3(0, 1.0f);
 		}
@@ -34,7 +34,7 @@ public class CursorController : MonoBehaviour {
 			this.transform.position += new Vector3(1.0f, 0);
 		}
 
-		// Î‚ğ’u‚¢‚ÄF‚ğ•ÏX‚·‚é
+		// çŸ³ã‚’ç½®ã„ã¦è‰²ã‚’å¤‰æ›´ã™ã‚‹
 		if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
 			Instantiate(diskPrefab, this.transform.position, Quaternion.identity);
 			this.GetComponent<SpriteRenderer>().color = isBlack ? Color.white : Color.black;
