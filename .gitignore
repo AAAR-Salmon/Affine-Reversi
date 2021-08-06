@@ -2,6 +2,7 @@
 /Library/
 /Logs/
 /Obj/
+/Temp/
 
 *.csproj
 *.unityproj

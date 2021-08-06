@@ -8,7 +8,7 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 922058136936995039}
+  - component: {fileID: 475215324290838783}
   - component: {fileID: 1119257161140838992}
   m_Layer: 0
   m_Name: PlaceableHintPrefab
@@ -17,7 +17,7 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &922058136936995039
+--- !u!4 &475215324290838783
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
