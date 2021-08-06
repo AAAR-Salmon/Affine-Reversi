@@ -46,6 +46,8 @@ public class GameController : MonoBehaviour {
 		PlaceDisk(4, 4, DiskColor.Black);
 		PlaceDisk(3, 4, DiskColor.White);
 		PlaceDisk(4, 3, DiskColor.White);
+		scoreBlackUI.GetComponent<Text>().text = countBlackDisk.ToString();
+		scoreWhiteUI.GetComponent<Text>().text = countWhiteDisk.ToString();
 	}
 
 	// Start is called before the first frame update
