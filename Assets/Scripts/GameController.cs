@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum DiskColor {
 	None,
@@ -11,15 +9,19 @@ public enum DiskColor {
 }
 public class GameController : MonoBehaviour {
 	private DiskColor turn = DiskColor.Black;
-	private GameObject cursor;
+	[SerializeField] private GameObject cursor;
+	[SerializeField] private GameObject scoreBlackUI;
+	[SerializeField] private GameObject scoreWhiteUI;
+	[SerializeField] private GameObject diskPrefab;
+	[SerializeField] private GameObject placeableHintPrefab;
 	private (int x, int y) cursorPos = (0, 0);
-	private GameObject diskPrefab;
-	private GameObject placeableHintPrefab;
 	private DiskColor[,] arrayColor;
 	private GameObject[,] arrayDisk;
 	private List<GameObject> listPlaceableHint;
-	private const int rowSize = 8;
-	private const int columnSize = 8;
+	[SerializeField] private const int rowSize = 8;
+	[SerializeField] private const int columnSize = 8;
+	private int countBlackDisk = 0;
+	private int countWhiteDisk = 0;
 	[SerializeField] private Color colorDiskBlack = Color.black;
 	[SerializeField] private Color colorCursorBlack = Color.black;
 	[SerializeField] private Color colorDiskWhite = Color.white;
@@ -31,9 +33,6 @@ public class GameController : MonoBehaviour {
 
 	private void Awake() {
 		turn = DiskColor.Black;
-		diskPrefab = (GameObject) Resources.Load("Prefabs/DiskPrefab");
-		placeableHintPrefab = (GameObject) Resources.Load("Prefabs/PlaceableHintPrefab");
-		cursor = this.transform.Find("Cursor").gameObject;
 		arrayColor = new DiskColor[rowSize, columnSize];
 		arrayDisk = new GameObject[rowSize, columnSize];
 		listPlaceableHint = new List<GameObject>();
@@ -80,17 +79,23 @@ public class GameController : MonoBehaviour {
 		if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
 			if (CountTurnoverOnPlace(cursorPos.x, cursorPos.y, turn) > 0) {
 				PlaceDisk(cursorPos.x, cursorPos.y, turn);
-				turn = (turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
-				cursor.GetComponent<SpriteRenderer>().color = (turn == DiskColor.Black ? colorCursorBlack : colorCursorWhite);
-				RefreshHint(turn);
+
+				RefreshHint(turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
 				if (listPlaceableHint.Count == 0) {
-					turn = (turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
-					cursor.GetComponent<SpriteRenderer>().color = (turn == DiskColor.Black ? colorCursorBlack : colorCursorWhite);
 					RefreshHint(turn);
 					if (listPlaceableHint.Count == 0) {
-						// finish
+						// 両者置けない場合
+						// TODO: ゲーム終了処理
+					} else {
+						// パスが起こり自分の手番が続く場合
 					}
+				} else {
+					// パスが起こらず相手に手番が移る場合
+					turn = (turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
 				}
+				scoreBlackUI.GetComponent<Text>().text = countBlackDisk.ToString();
+				scoreWhiteUI.GetComponent<Text>().text = countWhiteDisk.ToString();
+				cursor.GetComponent<SpriteRenderer>().color = (turn == DiskColor.Black ? colorCursorBlack : colorCursorWhite);
 			}
 		}
 	}
@@ -158,6 +163,16 @@ public class GameController : MonoBehaviour {
 		default:
 			break;
 		}
+
+		int countTurnover = CountTurnoverOnPlace(_x, _y, _c);
+		if (_c == DiskColor.Black) {
+			countBlackDisk += countTurnover + 1;
+			countWhiteDisk -= countTurnover;
+		} else {
+			countWhiteDisk += countTurnover + 1;
+			countBlackDisk -= countTurnover;
+		}
+
 		arrayColor[_x, _y] = _c;
 		arrayDisk[_x, _y] = Instantiate(diskPrefab, this.transform.position + Vector3FromInt3(_x, _y, 0), Quaternion.identity, this.transform);
 		arrayDisk[_x, _y].GetComponent<SpriteRenderer>().color = color;
