@@ -14,38 +14,55 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private GameObject scoreWhiteUI;
 	[SerializeField] private GameObject diskPrefab;
 	[SerializeField] private GameObject placeableHintPrefab;
+	[SerializeField] private Material gridMaterial;
 	private (int x, int y) cursorPos = (0, 0);
 	private DiskColor[,] arrayColor;
 	private GameObject[,] arrayDisk;
 	private List<GameObject> listPlaceableHint;
-	[SerializeField] private const int rowSize = 8;
-	[SerializeField] private const int columnSize = 8;
 	private int countBlackDisk = 0;
 	private int countWhiteDisk = 0;
 	[SerializeField] private Color colorDiskBlack = Color.black;
 	[SerializeField] private Color colorCursorBlack = Color.black;
 	[SerializeField] private Color colorDiskWhite = Color.white;
 	[SerializeField] private Color colorCursorWhite = Color.white;
-	[SerializeField] private float offsetX = -3.5f;
-	[SerializeField] private float offsetY = -3.5f;
-	[SerializeField] private float unitX = 1.0f;
-	[SerializeField] private float unitY = 1.0f;
+	[SerializeField] private float lineWeight = 0.07f;
+	[SerializeField] private float gridWidth = 8.0f;
+	[SerializeField] private float gridHeight = 8.0f;
+	[SerializeField] private AudioClip[] putDiskSE;
+	private int fracX;
+	private int fracY;
+	private float offsetX;
+	private float offsetY;
+	private float unitX;
+	private float unitY;
 
 	private void Awake() {
+		fracX = ConfigurationSingleton.instance.fracX;
+		fracY = ConfigurationSingleton.instance.fracY;
 		turn = DiskColor.Black;
-		arrayColor = new DiskColor[rowSize, columnSize];
-		arrayDisk = new GameObject[rowSize, columnSize];
+		arrayColor = new DiskColor[fracX, fracY];
+		arrayDisk = new GameObject[fracX, fracY];
 		listPlaceableHint = new List<GameObject>();
-		for (int i = 0; i < rowSize; i++) {
-			for (int j = 0; j < columnSize; j++) {
+		unitX = gridWidth / (fracX + lineWeight);
+		unitY = gridHeight / (fracY + lineWeight);
+		offsetX = -(fracX - 1.0f) / 2.0f * unitX;
+		offsetY = -(fracY - 1.0f) / 2.0f * unitY;
+		gridMaterial.SetInt("_FracX", fracX);
+		gridMaterial.SetInt("_FracY", fracY);
+		gridMaterial.SetFloat("_LineWeight", lineWeight);
+		for (int i = 0; i < fracX; i++) {
+			for (int j = 0; j < fracY; j++) {
 				arrayColor[i, j] = DiskColor.None;
 				arrayDisk[i, j] = null;
 			}
 		}
-		PlaceDisk(3, 3, DiskColor.Black);
-		PlaceDisk(4, 4, DiskColor.Black);
-		PlaceDisk(3, 4, DiskColor.White);
-		PlaceDisk(4, 3, DiskColor.White);
+		diskPrefab.transform.localScale = new Vector3(Mathf.Min(unitX, unitY) * 0.8f, Mathf.Min(unitX, unitY) * 0.8f, 1);
+		placeableHintPrefab.transform.localScale = new Vector3(Mathf.Min(unitX, unitY) * 0.3f, Mathf.Min(unitX, unitY) * 0.3f, 1);
+		cursor.transform.localScale = new Vector3(Mathf.Min(unitX, unitY) * 0.4f, Mathf.Min(unitX, unitY) * 0.4f, 1);
+		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2, DiskColor.Black);
+		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2 + 1, DiskColor.Black);
+		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2 + 1, DiskColor.White);
+		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2, DiskColor.White);
 		scoreBlackUI.GetComponent<Text>().text = countBlackDisk.ToString();
 		scoreWhiteUI.GetComponent<Text>().text = countWhiteDisk.ToString();
 	}
@@ -61,19 +78,19 @@ public class GameController : MonoBehaviour {
 	void Update() {
 		// キー入力による移動
 		if (Input.GetKeyDown(KeyCode.UpArrow)) {
-			cursorPos.y = (cursorPos.y + 1) % rowSize;
+			cursorPos.y = (cursorPos.y + 1) % fracY;
 			cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
 		}
 		if (Input.GetKeyDown(KeyCode.DownArrow)) {
-			cursorPos.y = (cursorPos.y + rowSize - 1) % rowSize;
+			cursorPos.y = (cursorPos.y + fracY - 1) % fracY;
 			cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
 		}
 		if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-			cursorPos.x = (cursorPos.x + columnSize - 1) % columnSize;
+			cursorPos.x = (cursorPos.x + fracX - 1) % fracX;
 			cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
 		}
 		if (Input.GetKeyDown(KeyCode.RightArrow)) {
-			cursorPos.x = (cursorPos.x + 1) % columnSize;
+			cursorPos.x = (cursorPos.x + 1) % fracX;
 			cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
 		}
 
@@ -107,8 +124,8 @@ public class GameController : MonoBehaviour {
 			Destroy(obj);
 		}
 		listPlaceableHint.Clear();
-		for (int i = 0; i < rowSize; i++) {
-			for (int j = 0; j < columnSize; j++) {
+		for (int i = 0; i < fracX; i++) {
+			for (int j = 0; j < fracY; j++) {
 				if (CountTurnoverOnPlace(i, j, _c) > 0) {
 					listPlaceableHint.Add(Instantiate(placeableHintPrefab, this.transform.position + Vector3FromInt3(i, j, 0), Quaternion.identity, this.transform));
 				}
@@ -197,6 +214,6 @@ public class GameController : MonoBehaviour {
 	}
 
 	bool InBoardArea(int _x, int _y) {
-		return 0 <= _x && _x < rowSize && 0 <= _y && _y < columnSize;
+		return 0 <= _x && _x < fracX && 0 <= _y && _y < fracY;
 	}
 }
