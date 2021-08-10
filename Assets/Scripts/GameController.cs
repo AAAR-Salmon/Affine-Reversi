@@ -59,10 +59,12 @@ public class GameController : MonoBehaviour {
 		diskPrefab.transform.localScale = new Vector3(Mathf.Min(unitX, unitY) * 0.8f, Mathf.Min(unitX, unitY) * 0.8f, 1);
 		placeableHintPrefab.transform.localScale = new Vector3(Mathf.Min(unitX, unitY) * 0.3f, Mathf.Min(unitX, unitY) * 0.3f, 1);
 		cursor.transform.localScale = new Vector3(Mathf.Min(unitX, unitY) * 0.4f, Mathf.Min(unitX, unitY) * 0.4f, 1);
+		this.GetComponent<AudioSource>().mute = true;
 		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2, DiskColor.Black);
 		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2 + 1, DiskColor.Black);
 		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2 + 1, DiskColor.White);
 		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2, DiskColor.White);
+		this.GetComponent<AudioSource>().mute = false;
 		scoreBlackUI.GetComponent<Text>().text = countBlackDisk.ToString();
 		scoreWhiteUI.GetComponent<Text>().text = countWhiteDisk.ToString();
 	}
@@ -211,6 +213,7 @@ public class GameController : MonoBehaviour {
 				}
 			}
 		}
+		this.GetComponent<AudioSource>().PlayOneShot(putDiskSE[Random.Range(0, putDiskSE.GetLength(0))]);
 	}
 
 	bool InBoardArea(int _x, int _y) {
