@@ -36,8 +36,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _FracX: 20
-    - _FracY: 4
+    - _FracX: 8
+    - _FracY: 8
     - _LineWeight: 0.07
     - _TileX: 9
     - _TileY: 8
