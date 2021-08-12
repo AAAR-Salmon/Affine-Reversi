@@ -14,10 +14,11 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private GameObject scoreWhiteUI;
 	[SerializeField] private GameObject diskPrefab;
 	[SerializeField] private GameObject placeableHintPrefab;
+	[SerializeField] private GameObject grid;
 	[SerializeField] private Material gridMaterial;
 	private (int x, int y) cursorPos = (0, 0);
 	private DiskColor[,] arrayColor;
-	private GameObject[,] arrayDisk;
+	private Dictionary<(int, int), GameObject> arrayDisk;
 	private List<GameObject> listPlaceableHint;
 	private int countBlackDisk = 0;
 	private int countWhiteDisk = 0;
@@ -26,53 +27,23 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private Color colorDiskWhite = Color.white;
 	[SerializeField] private Color colorCursorWhite = Color.white;
 	[SerializeField] private float lineWeight = 0.07f;
-	[SerializeField] private float gridWidth = 8.0f;
-	[SerializeField] private float gridHeight = 8.0f;
+	[SerializeField] private float gridBaseScale = 8.0f;
 	[SerializeField] private AudioClip[] putDiskSE;
 	private int fracX;
 	private int fracY;
 	private float offsetX;
 	private float offsetY;
-	private float unitX;
-	private float unitY;
+	private float unitLength;
 
-	private void Awake() {
-		fracX = ConfigurationSingleton.instance.fracX;
-		fracY = ConfigurationSingleton.instance.fracY;
-		turn = DiskColor.Black;
-		arrayColor = new DiskColor[fracX, fracY];
-		arrayDisk = new GameObject[fracX, fracY];
+
+	void Awake() {
 		listPlaceableHint = new List<GameObject>();
-		unitX = gridWidth / (fracX + lineWeight);
-		unitY = gridHeight / (fracY + lineWeight);
-		offsetX = -(fracX - 1.0f) / 2.0f * unitX;
-		offsetY = -(fracY - 1.0f) / 2.0f * unitY;
-		gridMaterial.SetInt("_FracX", fracX);
-		gridMaterial.SetInt("_FracY", fracY);
-		gridMaterial.SetFloat("_LineWeight", lineWeight);
-		for (int i = 0; i < fracX; i++) {
-			for (int j = 0; j < fracY; j++) {
-				arrayColor[i, j] = DiskColor.None;
-				arrayDisk[i, j] = null;
-			}
-		}
-		diskPrefab.transform.localScale = new Vector3(Mathf.Min(unitX, unitY) * 0.8f, Mathf.Min(unitX, unitY) * 0.8f, 1);
-		placeableHintPrefab.transform.localScale = new Vector3(Mathf.Min(unitX, unitY) * 0.3f, Mathf.Min(unitX, unitY) * 0.3f, 1);
-		cursor.transform.localScale = new Vector3(Mathf.Min(unitX, unitY) * 0.4f, Mathf.Min(unitX, unitY) * 0.4f, 1);
-		this.GetComponent<AudioSource>().mute = true;
-		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2, DiskColor.Black);
-		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2 + 1, DiskColor.Black);
-		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2 + 1, DiskColor.White);
-		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2, DiskColor.White);
-		this.GetComponent<AudioSource>().mute = false;
-		scoreBlackUI.GetComponent<Text>().text = countBlackDisk.ToString();
-		scoreWhiteUI.GetComponent<Text>().text = countWhiteDisk.ToString();
 	}
 
 	// Start is called before the first frame update
 	void Start() {
-		cursor.GetComponent<SpriteRenderer>().color = colorCursorBlack;
-		cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
+		ResizeBoard(ConfigurationSingleton.instance.fracX, ConfigurationSingleton.instance.fracY);
+		Init();
 		RefreshHint(turn);
 	}
 
@@ -121,6 +92,49 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
+	void ResizeBoard(int fracX, int fracY) {
+		this.fracX = fracX;
+		this.fracY = fracY;
+
+		unitLength = gridBaseScale / (Mathf.Max(fracX, fracY) + lineWeight);
+		offsetX = -(fracX - 1.0f) / 2.0f * unitLength;
+		offsetY = -(fracY - 1.0f) / 2.0f * unitLength;
+		grid.transform.localScale = new Vector3(unitLength * (fracX + lineWeight), unitLength * (fracY + lineWeight), 1);
+		diskPrefab.transform.localScale = new Vector3(unitLength * 0.8f, unitLength * 0.8f, 1);
+		placeableHintPrefab.transform.localScale = new Vector3(unitLength * 0.3f, unitLength * 0.3f, 1);
+		cursor.transform.localScale = new Vector3(unitLength * 0.4f, unitLength * 0.4f, 1);
+		gridMaterial.SetInt("_FracX", fracX);
+		gridMaterial.SetInt("_FracY", fracY);
+		gridMaterial.SetFloat("_LineWeight", lineWeight);
+	}
+
+	void Init() {
+		turn = DiskColor.Black;
+		arrayColor = new DiskColor[fracX, fracY];
+		for (int i = 0; i < fracX; i++) {
+			for (int j = 0; j < fracY; j++) {
+				arrayColor[i, j] = DiskColor.None;
+			}
+		}
+		arrayDisk = new Dictionary<(int, int), GameObject>();
+		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2, DiskColor.Black, true);
+		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2 + 1, DiskColor.Black, true);
+		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2 + 1, DiskColor.White, true);
+		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2, DiskColor.White, true);
+		scoreBlackUI.GetComponent<Text>().text = countBlackDisk.ToString();
+		scoreWhiteUI.GetComponent<Text>().text = countWhiteDisk.ToString();
+		cursor.GetComponent<SpriteRenderer>().color = colorCursorBlack;
+		cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
+	}
+
+	void Clear() {
+		arrayColor = null;
+		foreach (var pair in arrayDisk) {
+			Destroy(pair.Value);
+		}
+		arrayDisk = null;
+	}
+
 	void RefreshHint(DiskColor _c) {
 		foreach (var obj in listPlaceableHint) {
 			Destroy(obj);
@@ -136,7 +150,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	Vector3 Vector3FromInt3(int _x, int _y, int _z) {
-		return new Vector3(offsetX + unitX * _x, offsetY + unitY * _y, _z);
+		return new Vector3(offsetX + unitLength * _x, offsetY + unitLength * _y, _z);
 	}
 
 	int CountTurnoverOnPlace(int _x, int _y, DiskColor _c) {
@@ -167,7 +181,7 @@ public class GameController : MonoBehaviour {
 		return _result;
 	}
 
-	void PlaceDisk(int _x, int _y, DiskColor _c) {
+	void PlaceDisk(int _x, int _y, DiskColor _c, bool mute = false) {
 		if (_c == DiskColor.None) {
 			return;
 		}
@@ -195,8 +209,9 @@ public class GameController : MonoBehaviour {
 		}
 
 		arrayColor[_x, _y] = _c;
-		arrayDisk[_x, _y] = Instantiate(diskPrefab, this.transform.position + Vector3FromInt3(_x, _y, 0), Quaternion.identity, this.transform);
-		arrayDisk[_x, _y].GetComponent<SpriteRenderer>().color = color;
+		GameObject newDisk = Instantiate(diskPrefab, this.transform.position + Vector3FromInt3(_x, _y, 0), Quaternion.identity, this.transform);
+		newDisk.GetComponent<SpriteRenderer>().color = color;
+		arrayDisk.Add((_x, _y), newDisk);
 
 		(int, int)[] dpos = new (int, int)[8] { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
 		foreach (var (dx, dy) in dpos) {
@@ -209,11 +224,13 @@ public class GameController : MonoBehaviour {
 			if (InBoardArea(x, y) && arrayColor[x, y] == _c) {
 				while ((x -= dx, y -= dy) != (_x, _y)) {
 					arrayColor[x, y] = _c;
-					arrayDisk[x, y].GetComponent<SpriteRenderer>().color = color;
+					arrayDisk[(x, y)].GetComponent<SpriteRenderer>().color = color;
 				}
 			}
 		}
-		this.GetComponent<AudioSource>().PlayOneShot(putDiskSE[Random.Range(0, putDiskSE.GetLength(0))]);
+		if (!mute) {
+			this.GetComponent<AudioSource>().PlayOneShot(putDiskSE[Random.Range(0, putDiskSE.GetLength(0))]);
+		}
 	}
 
 	bool InBoardArea(int _x, int _y) {

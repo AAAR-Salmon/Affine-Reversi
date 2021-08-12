@@ -995,14 +995,14 @@ MonoBehaviour:
   scoreWhiteUI: {fileID: 620107812}
   diskPrefab: {fileID: 3660440596143093309, guid: 9d7a77c0e0bafb846a1cb51b1d1714f5, type: 3}
   placeableHintPrefab: {fileID: 3469944548164423716, guid: ca4a4cebac35fe34eba0a8ba33958794, type: 3}
+  grid: {fileID: 1640552134}
   gridMaterial: {fileID: 2100000, guid: 8d6b6997e556ff34da4299a37adbd68e, type: 2}
   colorDiskBlack: {r: 0, g: 0, b: 0, a: 1}
   colorCursorBlack: {r: 0.2, g: 0.2, b: 0.2, a: 1}
   colorDiskWhite: {r: 1, g: 1, b: 1, a: 1}
   colorCursorWhite: {r: 0.8, g: 0.8, b: 0.8, a: 1}
   lineWeight: 0.07
-  gridWidth: 8
-  gridHeight: 8
+  gridBaseScale: 8
   putDiskSE:
   - {fileID: 8300000, guid: 533328443b647e04a87deed01ba375b9, type: 3}
   - {fileID: 8300000, guid: ee41d18a6d8c1e448be187797fb9abc1, type: 3}
