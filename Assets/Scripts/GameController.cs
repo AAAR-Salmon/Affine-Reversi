@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public enum DiskColor {
 	None,
@@ -20,11 +21,11 @@ public class GameController : MonoBehaviour {
 	private DiskColor[,] arrayColor;
 	private Dictionary<(int, int), GameObject> arrayDisk;
 	private List<GameObject> listPlaceableHint;
-	private int countBlackDisk = 0;
-	private int countWhiteDisk = 0;
+	private int countBlackDisk;
+	private int countWhiteDisk;
 	[SerializeField] private Color colorDiskBlack = Color.black;
-	[SerializeField] private Color colorCursorBlack = Color.black;
 	[SerializeField] private Color colorDiskWhite = Color.white;
+	[SerializeField] private Color colorCursorBlack = Color.black;
 	[SerializeField] private Color colorCursorWhite = Color.white;
 	[SerializeField] private float lineWeight = 0.07f;
 	[SerializeField] private float gridBaseScale = 8.0f;
@@ -44,7 +45,6 @@ public class GameController : MonoBehaviour {
 	void Start() {
 		ResizeBoard(ConfigurationSingleton.instance.fracX, ConfigurationSingleton.instance.fracY);
 		Init();
-		RefreshHint(turn);
 	}
 
 	// Update is called once per frame
@@ -109,6 +109,8 @@ public class GameController : MonoBehaviour {
 	}
 
 	void Init() {
+		countBlackDisk = 0;
+		countWhiteDisk = 0;
 		turn = DiskColor.Black;
 		arrayColor = new DiskColor[fracX, fracY];
 		for (int i = 0; i < fracX; i++) {
@@ -125,6 +127,7 @@ public class GameController : MonoBehaviour {
 		scoreWhiteUI.GetComponent<Text>().text = countWhiteDisk.ToString();
 		cursor.GetComponent<SpriteRenderer>().color = colorCursorBlack;
 		cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
+		RefreshHint(turn);
 	}
 
 	void Clear() {
@@ -235,5 +238,15 @@ public class GameController : MonoBehaviour {
 
 	bool InBoardArea(int _x, int _y) {
 		return 0 <= _x && _x < fracX && 0 <= _y && _y < fracY;
+	}
+
+	public void OnClickClearButton() {
+		Clear();
+		Init();
+	}
+
+	public void OnClickExitButton() {
+		Clear();
+		SceneManager.LoadSceneAsync("TitleScene", LoadSceneMode.Single);
 	}
 }

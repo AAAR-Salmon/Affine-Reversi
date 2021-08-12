@@ -9,6 +9,11 @@ public class TitleController : MonoBehaviour {
 	[SerializeField] private GameObject fracXSlider;
 	[SerializeField] private GameObject fracYSlider;
 
+	void Start() {
+		fracXSlider.GetComponent<Slider>().value = ConfigurationSingleton.instance.fracX;
+		fracYSlider.GetComponent<Slider>().value = ConfigurationSingleton.instance.fracY;
+	}
+
 	public void OnStartButtonClick() {
 		SceneManager.LoadSceneAsync("MainScene", LoadSceneMode.Single);
 	}
