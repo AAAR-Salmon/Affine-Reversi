@@ -3,6 +3,7 @@
 /Logs/
 /Obj/
 /Temp/
+/UserSettings/
 
 *.csproj
 *.unityproj
