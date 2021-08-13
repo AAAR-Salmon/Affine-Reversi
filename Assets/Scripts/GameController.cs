@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public enum DiskColor {
 	None,
@@ -77,16 +78,19 @@ public class GameController : MonoBehaviour {
 					RefreshHint(turn);
 					if (listPlaceableHint.Count == 0) {
 						// 両者置けない場合
-						// TODO: ゲーム終了処理
+						ConfigurationSingleton.instance.blackScore = countBlackDisk;
+						ConfigurationSingleton.instance.whiteScore = countWhiteDisk;
+						SceneManager.LoadSceneAsync("ResultScene", LoadSceneMode.Single);
 					} else {
 						// パスが起こり自分の手番が続く場合
+						;
 					}
 				} else {
 					// パスが起こらず相手に手番が移る場合
 					turn = (turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
 				}
-				scoreBlackUI.GetComponent<Text>().text = countBlackDisk.ToString();
-				scoreWhiteUI.GetComponent<Text>().text = countWhiteDisk.ToString();
+				scoreBlackUI.GetComponent<TextMeshProUGUI>().text = countBlackDisk.ToString();
+				scoreWhiteUI.GetComponent<TextMeshProUGUI>().text = countWhiteDisk.ToString();
 				cursor.GetComponent<SpriteRenderer>().color = (turn == DiskColor.Black ? colorCursorBlack : colorCursorWhite);
 			}
 		}
@@ -123,8 +127,8 @@ public class GameController : MonoBehaviour {
 		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2 + 1, DiskColor.Black, true);
 		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2 + 1, DiskColor.White, true);
 		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2, DiskColor.White, true);
-		scoreBlackUI.GetComponent<Text>().text = countBlackDisk.ToString();
-		scoreWhiteUI.GetComponent<Text>().text = countWhiteDisk.ToString();
+		scoreBlackUI.GetComponent<TextMeshProUGUI>().text = countBlackDisk.ToString();
+		scoreWhiteUI.GetComponent<TextMeshProUGUI>().text = countWhiteDisk.ToString();
 		cursor.GetComponent<SpriteRenderer>().color = colorCursorBlack;
 		cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
 		RefreshHint(turn);

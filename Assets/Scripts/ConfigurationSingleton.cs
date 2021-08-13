@@ -7,6 +7,8 @@ public class ConfigurationSingleton {
 
 	public int fracX;
 	public int fracY;
+	public int blackScore;
+	public int whiteScore;
 
 	public static ConfigurationSingleton instance {
 		get {
@@ -20,5 +22,7 @@ public class ConfigurationSingleton {
 	private ConfigurationSingleton() {
 		fracX = 8;
 		fracY = 8;
+		blackScore = 0;
+		whiteScore = 0;
 	}
 }
