@@ -286,8 +286,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 668f13952c41bf548bbe289490d21bea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scoreBlackUI: {fileID: 35341235}
-  scoreWhiteUI: {fileID: 982895523}
+  scoreBlackUI: {fileID: 35341237}
+  scoreWhiteUI: {fileID: 982895525}
 --- !u!4 &66414871
 Transform:
   m_ObjectHideFlags: 0

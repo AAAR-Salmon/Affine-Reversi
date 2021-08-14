@@ -12,8 +12,8 @@ public enum DiskColor {
 public class GameController : MonoBehaviour {
 	private DiskColor turn = DiskColor.Black;
 	[SerializeField] private GameObject cursor;
-	[SerializeField] private GameObject scoreBlackUI;
-	[SerializeField] private GameObject scoreWhiteUI;
+	[SerializeField] private TextMeshProUGUI scoreBlackUI;
+	[SerializeField] private TextMeshProUGUI scoreWhiteUI;
 	[SerializeField] private GameObject diskPrefab;
 	[SerializeField] private GameObject placeableHintPrefab;
 	[SerializeField] private GameObject grid;
@@ -91,8 +91,8 @@ public class GameController : MonoBehaviour {
 					// パスが起こらず相手に手番が移る場合
 					turn = (turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
 				}
-				scoreBlackUI.GetComponent<TextMeshProUGUI>().text = countBlackDisk.ToString();
-				scoreWhiteUI.GetComponent<TextMeshProUGUI>().text = countWhiteDisk.ToString();
+				scoreBlackUI.text = countBlackDisk.ToString();
+				scoreWhiteUI.text = countWhiteDisk.ToString();
 				cursor.GetComponent<SpriteRenderer>().color = (turn == DiskColor.Black ? colorCursorBlack : colorCursorWhite);
 			}
 		}
@@ -136,8 +136,8 @@ public class GameController : MonoBehaviour {
 		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2 + 1, DiskColor.Black, true);
 		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2 + 1, DiskColor.White, true);
 		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2, DiskColor.White, true);
-		scoreBlackUI.GetComponent<TextMeshProUGUI>().text = countBlackDisk.ToString();
-		scoreWhiteUI.GetComponent<TextMeshProUGUI>().text = countWhiteDisk.ToString();
+		scoreBlackUI.text = countBlackDisk.ToString();
+		scoreWhiteUI.text = countWhiteDisk.ToString();
 		cursor.GetComponent<SpriteRenderer>().color = colorCursorBlack;
 		cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
 		RefreshHint(turn);
