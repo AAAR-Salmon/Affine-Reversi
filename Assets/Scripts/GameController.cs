@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
+﻿using System.Collections;
+using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public enum DiskColor {
 	None,
@@ -80,7 +80,9 @@ public class GameController : MonoBehaviour {
 						// 両者置けない場合
 						ConfigurationSingleton.instance.blackScore = countBlackDisk;
 						ConfigurationSingleton.instance.whiteScore = countWhiteDisk;
-						SceneManager.LoadSceneAsync("ResultScene", LoadSceneMode.Single);
+						StartCoroutine(SimpleDelayColoutine(1.0f, () => {
+							SceneManager.LoadSceneAsync("ResultScene", LoadSceneMode.Single);
+						}));
 					} else {
 						// パスが起こり自分の手番が続く場合
 						;
@@ -94,6 +96,11 @@ public class GameController : MonoBehaviour {
 				cursor.GetComponent<SpriteRenderer>().color = (turn == DiskColor.Black ? colorCursorBlack : colorCursorWhite);
 			}
 		}
+	}
+
+	private IEnumerator SimpleDelayColoutine(float timeSeconds, System.Action action) {
+		yield return new WaitForSeconds(timeSeconds);
+		action();
 	}
 
 	void ResizeBoard(int fracX, int fracY) {
