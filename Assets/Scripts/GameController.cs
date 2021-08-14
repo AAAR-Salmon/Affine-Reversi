@@ -17,7 +17,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private GameObject diskPrefab;
 	[SerializeField] private GameObject placeableHintPrefab;
 	[SerializeField] private GameObject grid;
-	[SerializeField] private Material gridMaterial;
+	private MaterialPropertyBlock gridMaterialPropertyBlock;
 	private (int x, int y) cursorPos = (0, 0);
 	private DiskColor[,] arrayColor;
 	private Dictionary<(int, int), GameObject> arrayDisk;
@@ -107,9 +107,11 @@ public class GameController : MonoBehaviour {
 		diskPrefab.transform.localScale = new Vector3(unitLength * 0.8f, unitLength * 0.8f, 1);
 		placeableHintPrefab.transform.localScale = new Vector3(unitLength * 0.3f, unitLength * 0.3f, 1);
 		cursor.transform.localScale = new Vector3(unitLength * 0.4f, unitLength * 0.4f, 1);
-		gridMaterial.SetInt("_FracX", fracX);
-		gridMaterial.SetInt("_FracY", fracY);
-		gridMaterial.SetFloat("_LineWeight", lineWeight);
+		gridMaterialPropertyBlock = new MaterialPropertyBlock();
+		gridMaterialPropertyBlock.SetInt("_FracX", fracX);
+		gridMaterialPropertyBlock.SetInt("_FracY", fracY);
+		gridMaterialPropertyBlock.SetFloat("_LineWeight", lineWeight);
+		grid.GetComponent<SpriteRenderer>().SetPropertyBlock(gridMaterialPropertyBlock);
 	}
 
 	void Init() {
