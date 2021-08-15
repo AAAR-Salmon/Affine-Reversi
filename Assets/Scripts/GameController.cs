@@ -17,6 +17,7 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private GameObject diskPrefab;
 	[SerializeField] private GameObject placeableHintPrefab;
 	[SerializeField] private GameObject grid;
+	[SerializeField] private Camera mainCamera;
 	private MaterialPropertyBlock gridMaterialPropertyBlock;
 	private (int x, int y) cursorPos = (0, 0);
 	private DiskColor[,] arrayColor;

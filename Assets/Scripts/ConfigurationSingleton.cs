@@ -1,8 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class ConfigurationSingleton {
+﻿public class ConfigurationSingleton {
 	private static ConfigurationSingleton _instance;
 
 	public int fracX;
