@@ -1,5 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Text;
+using System.Web;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -33,9 +36,8 @@ public class GameController : MonoBehaviour {
 	private float offsetY;
 	private float unitLength;
 
-
 	void Awake() {
-		GameStateSingleton.instance.playerColor = Random.Range(0, 2) == 0 ? DiskColor.Black : DiskColor.White;
+		GameStateSingleton.instance.playerColor = UnityEngine.Random.Range(0, 2) == 0 ? DiskColor.Black : DiskColor.White;
 		listPlaceableHint = new List<GameObject>();
 	}
 
@@ -77,9 +79,9 @@ public class GameController : MonoBehaviour {
 						// 両者置けない場合
 						GameStateSingleton.instance.blackScore = countBlackDisk;
 						GameStateSingleton.instance.whiteScore = countWhiteDisk;
-						StartCoroutine(SimpleDelayColoutine(1.0f, () => {
-							SceneManager.LoadSceneAsync("ResultScene", LoadSceneMode.Single);
-						}));
+						//StartCoroutine(SimpleDelayColoutine(1.0f, () => {
+						//	SceneManager.LoadSceneAsync("ResultScene", LoadSceneMode.Single);
+						//}));
 					} else {
 						// パスが起こり自分の手番が続く場合
 						;
@@ -258,5 +260,37 @@ public class GameController : MonoBehaviour {
 	public void OnClickExitButton() {
 		Clear();
 		SceneManager.LoadSceneAsync("TitleScene", LoadSceneMode.Single);
+	}
+
+	public void ShareTwitter() {
+		Application.OpenURL(
+			new Func<string>(() => {
+				var query = HttpUtility.ParseQueryString("");
+				query.Add("url", "https://unityroom.com/games/scalable-reversi");
+				query.Add("hashtags", "クソデカリバーシ");
+				StringBuilder sb = new StringBuilder();
+				sb.Append(GameStateSingleton.instance.blackScore);
+				sb.Append("-");
+				sb.Append(GameStateSingleton.instance.whiteScore);
+				sb.Append("で");
+				if (GameStateSingleton.instance.blackScore == GameStateSingleton.instance.whiteScore) {
+					sb.Append("引き分けでした。");
+				} else {
+					if ((GameStateSingleton.instance.playerColor == DiskColor.Black) == (GameStateSingleton.instance.blackScore > GameStateSingleton.instance.whiteScore)) {
+						sb.Append("勝ちました！");
+					} else {
+						sb.Append("負けました……");
+					}
+				}
+				query.Add("text", sb.ToString());
+				return new System.UriBuilder("https://twitter.com/intent/tweet") {
+					Query = query.ToString()
+				}.Uri.ToString();
+			})()
+		);
+	}
+
+	public void SavePNGImage() {
+
 	}
 }
