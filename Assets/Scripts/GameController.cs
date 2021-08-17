@@ -35,12 +35,13 @@ public class GameController : MonoBehaviour {
 
 
 	void Awake() {
+		GameStateSingleton.instance.playerColor = Random.Range(0, 2) == 0 ? DiskColor.Black : DiskColor.White;
 		listPlaceableHint = new List<GameObject>();
 	}
 
 	// Start is called before the first frame update
 	void Start() {
-		ResizeBoard(ConfigurationSingleton.instance.fracX, ConfigurationSingleton.instance.fracY);
+		ResizeBoard(GameStateSingleton.instance.fracX, GameStateSingleton.instance.fracY);
 		Init();
 	}
 
@@ -74,8 +75,8 @@ public class GameController : MonoBehaviour {
 					RefreshHint(turn);
 					if (listPlaceableHint.Count == 0) {
 						// 両者置けない場合
-						ConfigurationSingleton.instance.blackScore = countBlackDisk;
-						ConfigurationSingleton.instance.whiteScore = countWhiteDisk;
+						GameStateSingleton.instance.blackScore = countBlackDisk;
+						GameStateSingleton.instance.whiteScore = countWhiteDisk;
 						StartCoroutine(SimpleDelayColoutine(1.0f, () => {
 							SceneManager.LoadSceneAsync("ResultScene", LoadSceneMode.Single);
 						}));

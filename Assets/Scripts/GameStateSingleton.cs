@@ -11,6 +11,7 @@ public class GameStateSingleton {
 	public int fracY;
 	public int blackScore;
 	public int whiteScore;
+	public DiskColor playerColor;
 
 	public static GameStateSingleton instance {
 		get {
@@ -26,5 +27,6 @@ public class GameStateSingleton {
 		fracY = 8;
 		blackScore = 0;
 		whiteScore = 0;
+		playerColor = DiskColor.Black;
 	}
 }

@@ -8,8 +8,8 @@ public class TitleController : MonoBehaviour {
 	[SerializeField] private GameObject fracYSlider;
 
 	void Start() {
-		fracXSlider.GetComponent<Slider>().value = ConfigurationSingleton.instance.fracX;
-		fracYSlider.GetComponent<Slider>().value = ConfigurationSingleton.instance.fracY;
+		fracXSlider.GetComponent<Slider>().value = GameStateSingleton.instance.fracX;
+		fracYSlider.GetComponent<Slider>().value = GameStateSingleton.instance.fracY;
 	}
 
 	public void OnStartButtonClick() {
@@ -17,12 +17,12 @@ public class TitleController : MonoBehaviour {
 	}
 
 	public void OnChangeFracXSlider() {
-		ConfigurationSingleton.instance.fracX = Mathf.FloorToInt(fracXSlider.GetComponent<Slider>().value);
+		GameStateSingleton.instance.fracX = Mathf.FloorToInt(fracXSlider.GetComponent<Slider>().value);
 		fracXSlider.transform.Find("Value Indicator").GetComponent<TextMeshProUGUI>().text = Mathf.FloorToInt(fracXSlider.GetComponent<Slider>().value).ToString();
 	}
 
 	public void OnChangeFracYSlider() {
-		ConfigurationSingleton.instance.fracY = Mathf.FloorToInt(fracYSlider.GetComponent<Slider>().value);
+		GameStateSingleton.instance.fracY = Mathf.FloorToInt(fracYSlider.GetComponent<Slider>().value);
 		fracYSlider.transform.Find("Value Indicator").GetComponent<TextMeshProUGUI>().text = Mathf.FloorToInt(fracYSlider.GetComponent<Slider>().value).ToString();
 	}
 }
