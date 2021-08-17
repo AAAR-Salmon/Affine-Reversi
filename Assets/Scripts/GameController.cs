@@ -4,11 +4,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public enum DiskColor {
-	None,
-	Black,
-	White
-}
 public class GameController : MonoBehaviour {
 	private DiskColor turn = DiskColor.Black;
 	[SerializeField] private GameObject cursor;
