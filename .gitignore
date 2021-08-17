@@ -6,6 +6,7 @@
 /UserSettings/
 
 *.csproj
+*.csproj.user
 *.unityproj
 *.sln
 *.suo
