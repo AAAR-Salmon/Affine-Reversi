@@ -36,6 +36,7 @@ public class GameController : MonoBehaviour {
 	private float offsetX;
 	private float offsetY;
 	private float unitLength;
+	[SerializeField] private GameObject twitterShareButton;
 
 #if UNITY_WEBGL
 	[DllImport("__Internal")]
@@ -43,7 +44,6 @@ public class GameController : MonoBehaviour {
 #endif
 
 	void Awake() {
-		GameStateSingleton.instance.playerColor = EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White);
 		listPlaceableHint = new List<GameObject>();
 	}
 
@@ -85,9 +85,7 @@ public class GameController : MonoBehaviour {
 						// 両者置けない場合
 						GameStateSingleton.instance.blackScore = countBlackDisk;
 						GameStateSingleton.instance.whiteScore = countWhiteDisk;
-						//StartCoroutine(SimpleDelayColoutine(1.0f, () => {
-						//	SceneManager.LoadSceneAsync("ResultScene", LoadSceneMode.Single);
-						//}));
+						twitterShareButton.SetActive(true);
 					} else {
 						// パスが起こり自分の手番が続く場合
 						;
@@ -130,6 +128,7 @@ public class GameController : MonoBehaviour {
 		countBlackDisk = 0;
 		countWhiteDisk = 0;
 		turn = DiskColor.Black;
+		GameStateSingleton.instance.playerColor = EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White);
 		arrayColor = new DiskColor[fracX, fracY];
 		for (int i = 0; i < fracX; i++) {
 			for (int j = 0; j < fracY; j++) {
@@ -146,6 +145,7 @@ public class GameController : MonoBehaviour {
 		cursor.GetComponent<SpriteRenderer>().color = colorCursorBlack;
 		cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
 		RefreshHint(turn);
+		twitterShareButton.SetActive(false);
 	}
 
 	void Clear() {
