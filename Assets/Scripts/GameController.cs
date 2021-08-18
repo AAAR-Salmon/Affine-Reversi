@@ -43,7 +43,7 @@ public class GameController : MonoBehaviour {
 #endif
 
 	void Awake() {
-		GameStateSingleton.instance.playerColor = UnityEngine.Random.Range(0, 2) == 0 ? DiskColor.Black : DiskColor.White;
+		GameStateSingleton.instance.playerColor = EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White);
 		listPlaceableHint = new List<GameObject>();
 	}
 
@@ -250,7 +250,7 @@ public class GameController : MonoBehaviour {
 			}
 		}
 		if (!mute) {
-			this.GetComponent<AudioSource>().PlayOneShot(putDiskSE[Random.Range(0, putDiskSE.GetLength(0))]);
+			this.GetComponent<AudioSource>().PlayOneShot(putDiskSE.RandomElement());
 		}
 	}
 
