@@ -730,7 +730,7 @@ MonoBehaviour:
         m_Calls:
         - m_Target: {fileID: 1677280782}
           m_TargetAssemblyTypeName: GameController, Assembly-CSharp
-          m_MethodName: OnClickClearButton
+          m_MethodName: SavePNGImage
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
@@ -1201,7 +1201,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -100, y: 250}
-  m_SizeDelta: {x: 80, y: 80}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1409385622
 MonoBehaviour:
@@ -1491,7 +1491,6 @@ MonoBehaviour:
   diskPrefab: {fileID: 3660440596143093309, guid: 9d7a77c0e0bafb846a1cb51b1d1714f5, type: 3}
   placeableHintPrefab: {fileID: 3469944548164423716, guid: ca4a4cebac35fe34eba0a8ba33958794, type: 3}
   grid: {fileID: 1640552134}
-  mainCamera: {fileID: 519420031}
   colorDiskBlack: {r: 0, g: 0, b: 0, a: 1}
   colorDiskWhite: {r: 1, g: 1, b: 1, a: 1}
   colorCursorBlack: {r: 0.2, g: 0.2, b: 0.2, a: 1}
@@ -1666,7 +1665,7 @@ MonoBehaviour:
         m_Calls:
         - m_Target: {fileID: 1677280782}
           m_TargetAssemblyTypeName: GameController, Assembly-CSharp
-          m_MethodName: OnClickClearButton
+          m_MethodName: ShareTwitter
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}

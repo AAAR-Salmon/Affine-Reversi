@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Web;
 using TMPro;
@@ -15,7 +17,6 @@ public class GameController : MonoBehaviour {
 	[SerializeField] private GameObject diskPrefab;
 	[SerializeField] private GameObject placeableHintPrefab;
 	[SerializeField] private GameObject grid;
-	[SerializeField] private Camera mainCamera;
 	private MaterialPropertyBlock gridMaterialPropertyBlock;
 	private (int x, int y) cursorPos = (0, 0);
 	private DiskColor[,] arrayColor;
@@ -35,6 +36,11 @@ public class GameController : MonoBehaviour {
 	private float offsetX;
 	private float offsetY;
 	private float unitLength;
+
+#if UNITY_WEBGL
+	[DllImport("__Internal")]
+	private static extern void DownloadPNG(byte[] bytes, int size);
+#endif
 
 	void Awake() {
 		GameStateSingleton.instance.playerColor = UnityEngine.Random.Range(0, 2) == 0 ? DiskColor.Black : DiskColor.White;
@@ -291,6 +297,20 @@ public class GameController : MonoBehaviour {
 	}
 
 	public void SavePNGImage() {
+		StartCoroutine(CaptureScreenshotIntoTexture());
+	}
 
+	private IEnumerator CaptureScreenshotIntoTexture() {
+		Texture2D tex = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+		yield return new WaitForEndOfFrame();
+		tex.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
+		tex.Apply();
+		byte[] bytes = tex.EncodeToPNG();
+		Destroy(tex);
+#if UNITY_EDITOR
+		File.WriteAllBytes(Application.persistentDataPath + "/screenshot.png", bytes);
+#elif UNITY_WEBGL
+		DownloadPNG(bytes, bytes.Length);
+#endif
 	}
 }
