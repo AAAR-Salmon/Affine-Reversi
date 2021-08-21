@@ -11,6 +11,7 @@ using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour {
 	private DiskColor currentTurn = DiskColor.Black;
+	private bool isGameFinished;
 	[SerializeField] private GameObject cursor;
 	[SerializeField] private TextMeshProUGUI scoreBlackUI;
 	[SerializeField] private TextMeshProUGUI scoreWhiteUI;
@@ -20,8 +21,9 @@ public class GameController : MonoBehaviour {
 	private MaterialPropertyBlock gridMaterialPropertyBlock;
 	private (int x, int y) cursorPos = (0, 0);
 	private DiskColor[,] arrayColor;
-	private Dictionary<(int, int), GameObject> arrayDisk;
+	private Dictionary<(int, int), GameObject> dictionaryDiskInstance;
 	private List<GameObject> listPlaceableHint;
+	private List<(int, int)> listPlaceablePosition;
 	private int countBlackDisk;
 	private int countWhiteDisk;
 	[SerializeField] private Color colorDiskBlack = Color.black;
@@ -44,6 +46,7 @@ public class GameController : MonoBehaviour {
 #endif
 
 	void Awake() {
+		listPlaceablePosition = new List<(int, int)>();
 		listPlaceableHint = new List<GameObject>();
 	}
 
@@ -73,10 +76,18 @@ public class GameController : MonoBehaviour {
 			cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
 		}
 
-		// 石を置いて色を変更する
-		if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
-			if (CountTurnoverOnPlace(cursorPos.x, cursorPos.y, currentTurn) > 0) {
-				PlaceDisk(cursorPos.x, cursorPos.y, currentTurn);
+		if (!isGameFinished) {
+			if (currentTurn == GameStateSingleton.instance.playerColor) {
+				// 石を置いて色を変更する
+				if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
+					if (CountTurnoverOnPlace(cursorPos.x, cursorPos.y, currentTurn) > 0) {
+						PlaceDisk(cursorPos.x, cursorPos.y, currentTurn);
+						currentTurn = NextTurn(currentTurn);
+					}
+				}
+			} else {
+				var (x, y) = listPlaceablePosition.RandomElement();
+				PlaceDisk(x, y, currentTurn);
 				currentTurn = NextTurn(currentTurn);
 			}
 		}
@@ -106,6 +117,7 @@ public class GameController : MonoBehaviour {
 	}
 
 	void Init() {
+		isGameFinished = false;
 		countBlackDisk = 0;
 		countWhiteDisk = 0;
 		currentTurn = DiskColor.Black;
@@ -116,7 +128,7 @@ public class GameController : MonoBehaviour {
 				arrayColor[i, j] = DiskColor.None;
 			}
 		}
-		arrayDisk = new Dictionary<(int, int), GameObject>();
+		dictionaryDiskInstance = new Dictionary<(int, int), GameObject>();
 		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2, DiskColor.Black, true);
 		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2 + 1, DiskColor.Black, true);
 		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2 + 1, DiskColor.White, true);
@@ -125,29 +137,38 @@ public class GameController : MonoBehaviour {
 		scoreWhiteUI.text = countWhiteDisk.ToString();
 		cursor.GetComponent<SpriteRenderer>().color = colorCursorBlack;
 		cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
-		RefreshHint(currentTurn);
+		RefreshPlaceablePosition(currentTurn);
+		RefreshPlaceableHint();
 		twitterShareButton.SetActive(false);
 	}
 
 	void Clear() {
 		arrayColor = null;
-		foreach (var pair in arrayDisk) {
+		foreach (var pair in dictionaryDiskInstance) {
 			Destroy(pair.Value);
 		}
-		arrayDisk = null;
+		dictionaryDiskInstance = null;
 	}
 
-	void RefreshHint(DiskColor _c) {
+
+	void RefreshPlaceablePosition(DiskColor _c) {
+		listPlaceablePosition.Clear();
+		for (int x = 0; x < fracX; x++) {
+			for (int y = 0; y < fracY; y++) {
+				if (CountTurnoverOnPlace(x, y, _c) > 0) {
+					listPlaceablePosition.Add((x, y));
+				}
+			}
+		}
+	}
+
+	void RefreshPlaceableHint() {
 		foreach (var obj in listPlaceableHint) {
 			Destroy(obj);
 		}
 		listPlaceableHint.Clear();
-		for (int i = 0; i < fracX; i++) {
-			for (int j = 0; j < fracY; j++) {
-				if (CountTurnoverOnPlace(i, j, _c) > 0) {
-					listPlaceableHint.Add(Instantiate(placeableHintPrefab, this.transform.position + Vector3FromInt3(i, j, 0), Quaternion.identity, this.transform));
-				}
-			}
+		foreach (var (x, y) in listPlaceablePosition) {
+			listPlaceableHint.Add(Instantiate(placeableHintPrefab, this.transform.position + Vector3FromInt3(x, y, 0), Quaternion.identity, this.transform));
 		}
 	}
 
@@ -213,7 +234,7 @@ public class GameController : MonoBehaviour {
 		arrayColor[_x, _y] = _c;
 		GameObject newDisk = Instantiate(diskPrefab, this.transform.position + Vector3FromInt3(_x, _y, 0), Quaternion.identity, this.transform);
 		newDisk.GetComponent<SpriteRenderer>().color = color;
-		arrayDisk.Add((_x, _y), newDisk);
+		dictionaryDiskInstance.Add((_x, _y), newDisk);
 
 		(int, int)[] dpos = new (int, int)[8] { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
 		foreach (var (dx, dy) in dpos) {
@@ -226,7 +247,7 @@ public class GameController : MonoBehaviour {
 			if (InBoardArea(x, y) && arrayColor[x, y] == _c) {
 				while ((x -= dx, y -= dy) != (_x, _y)) {
 					arrayColor[x, y] = _c;
-					arrayDisk[(x, y)].GetComponent<SpriteRenderer>().color = color;
+					dictionaryDiskInstance[(x, y)].GetComponent<SpriteRenderer>().color = color;
 				}
 			}
 		}
@@ -236,14 +257,12 @@ public class GameController : MonoBehaviour {
 	}
 
 	DiskColor NextTurn(DiskColor turn) {
-		DiskColor result = turn;
-		RefreshHint(turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
-		if (listPlaceableHint.Count == 0) {
-			RefreshHint(turn);
-			if (listPlaceableHint.Count == 0) {
+		RefreshPlaceablePosition(turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
+		if (listPlaceablePosition.Count == 0) {
+			RefreshPlaceablePosition(turn);
+			if (listPlaceablePosition.Count == 0) {
 				// 両者置けない場合
-				GameStateSingleton.instance.blackScore = countBlackDisk;
-				GameStateSingleton.instance.whiteScore = countWhiteDisk;
+				isGameFinished = true;
 				twitterShareButton.SetActive(true);
 			} else {
 				// パスが起こり自分の手番が続く場合
@@ -251,12 +270,13 @@ public class GameController : MonoBehaviour {
 			}
 		} else {
 			// パスが起こらず相手に手番が移る場合
-			result = (turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
+			turn = (turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
 		}
 		scoreBlackUI.text = countBlackDisk.ToString();
 		scoreWhiteUI.text = countWhiteDisk.ToString();
-		cursor.GetComponent<SpriteRenderer>().color = (result == DiskColor.Black ? colorCursorBlack : colorCursorWhite);
-		return result;
+		cursor.GetComponent<SpriteRenderer>().color = (turn == DiskColor.Black ? colorCursorBlack : colorCursorWhite);
+		RefreshPlaceableHint();
+		return turn;
 	}
 
 	bool InBoardArea(int _x, int _y) {
