@@ -11,6 +11,7 @@ using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour {
 	private DiskColor currentTurn = DiskColor.Black;
+	private DiskColor playerColor = DiskColor.Black;
 	private bool isGameFinished;
 	[SerializeField] private GameObject cursor;
 	[SerializeField] private TextMeshProUGUI scoreBlackUI;
@@ -77,7 +78,7 @@ public class GameController : MonoBehaviour {
 		}
 
 		if (!isGameFinished) {
-			if (currentTurn == GameStateSingleton.instance.playerColor) {
+			if (currentTurn == playerColor) {
 				// 石を置いて色を変更する
 				if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
 					if (CountTurnoverOnPlace(cursorPos.x, cursorPos.y, currentTurn) > 0) {
@@ -121,7 +122,7 @@ public class GameController : MonoBehaviour {
 		countBlackDisk = 0;
 		countWhiteDisk = 0;
 		currentTurn = DiskColor.Black;
-		GameStateSingleton.instance.playerColor = EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White);
+		playerColor = EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White);
 		arrayColor = new DiskColor[fracX, fracY];
 		for (int i = 0; i < fracX; i++) {
 			for (int j = 0; j < fracY; j++) {
@@ -300,14 +301,14 @@ public class GameController : MonoBehaviour {
 				query.Add("url", "https://unityroom.com/games/scalable-reversi");
 				query.Add("hashtags", "クソデカリバーシ");
 				StringBuilder sb = new StringBuilder();
-				sb.Append(GameStateSingleton.instance.blackScore);
+				sb.Append(countBlackDisk);
 				sb.Append("-");
-				sb.Append(GameStateSingleton.instance.whiteScore);
+				sb.Append(countWhiteDisk);
 				sb.Append("で");
-				if (GameStateSingleton.instance.blackScore == GameStateSingleton.instance.whiteScore) {
+				if (countBlackDisk == countWhiteDisk) {
 					sb.Append("引き分けでした。");
 				} else {
-					if ((GameStateSingleton.instance.playerColor == DiskColor.Black) == (GameStateSingleton.instance.blackScore > GameStateSingleton.instance.whiteScore)) {
+					if ((playerColor == DiskColor.Black) == (countBlackDisk > countWhiteDisk)) {
 						sb.Append("勝ちました！");
 					} else {
 						sb.Append("負けました……");
