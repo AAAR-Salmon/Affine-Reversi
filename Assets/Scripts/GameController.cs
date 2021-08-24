@@ -7,6 +7,7 @@ using System.Text;
 using System.Web;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour {
@@ -40,6 +41,7 @@ public class GameController : MonoBehaviour {
 	private float offsetY;
 	private float unitLength;
 	[SerializeField] private GameObject twitterShareButton;
+	[SerializeField] private Camera mainCamera;
 
 #if UNITY_WEBGL
 	[DllImport("__Internal")]
@@ -84,6 +86,17 @@ public class GameController : MonoBehaviour {
 					if (CountTurnoverOnPlace(cursorPos.x, cursorPos.y, currentTurn) > 0) {
 						PlaceDisk(cursorPos.x, cursorPos.y, currentTurn);
 						currentTurn = NextTurn(currentTurn);
+					}
+				} else if (Input.GetMouseButtonDown(0)) {
+					Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+					RaycastHit2D raycastHit = Physics2D.Raycast(ray.origin, ray.direction);
+					if (!(raycastHit.collider is null)) {
+						int x = Mathf.FloorToInt((grid.transform.lossyScale.x / 2.0f + raycastHit.point.x - this.transform.position.x) / unitLength);
+						int y = Mathf.FloorToInt((grid.transform.lossyScale.y / 2.0f + raycastHit.point.y - this.transform.position.y) / unitLength);
+						if (CountTurnoverOnPlace(x, y, currentTurn) > 0) {
+							PlaceDisk(x, y, currentTurn);
+							currentTurn = NextTurn(currentTurn);
+						}
 					}
 				}
 			} else {
