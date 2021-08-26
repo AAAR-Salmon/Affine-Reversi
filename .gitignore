@@ -1,9 +1,12 @@
+/.idea/
 /.vs/
 /Library/
 /Logs/
 /Obj/
 /Temp/
 /UserSettings/
+
+/Scalable-Reversi.sln.DotSettings
 
 *.csproj
 *.csproj.user
