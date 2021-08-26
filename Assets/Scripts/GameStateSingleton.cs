@@ -1,10 +1,4 @@
-﻿public enum DiskColor {
-	None,
-	Black,
-	White
-}
-
-public class GameStateSingleton {
+﻿public class GameStateSingleton {
 	private static GameStateSingleton _instance;
 
 	public int fracX;
