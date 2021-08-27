@@ -1,18 +1,16 @@
-﻿using System;
+﻿using Photon.Pun;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Web;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour {
 	private DiskColor currentTurn = DiskColor.Black;
-	private DiskColor playerColor = DiskColor.Black;
 	private bool isGameFinished;
 	[SerializeField] private GameObject cursor;
 	[SerializeField] private TextMeshProUGUI scoreBlackUI;
@@ -42,6 +40,7 @@ public class GameController : MonoBehaviour {
 	private float unitLength;
 	[SerializeField] private GameObject twitterShareButton;
 	[SerializeField] private Camera mainCamera;
+	private PhotonView photonView;
 
 #if UNITY_WEBGL
 	[DllImport("__Internal")]
@@ -55,6 +54,8 @@ public class GameController : MonoBehaviour {
 
 	// Start is called before the first frame update
 	void Start() {
+		photonView = GetComponent<PhotonView>();
+		GameStateSingleton.instance.playerColor = (DiskColor)PhotonNetwork.LocalPlayer.CustomProperties["color"];
 		ResizeBoard(GameStateSingleton.instance.fracX, GameStateSingleton.instance.fracY);
 		Init();
 	}
@@ -80,12 +81,12 @@ public class GameController : MonoBehaviour {
 		}
 
 		if (!isGameFinished) {
-			if (currentTurn == playerColor) {
+			if (currentTurn == GameStateSingleton.instance.playerColor) {
 				// 石を置いて色を変更する
 				if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
 					if (CountTurnoverOnPlace(cursorPos.x, cursorPos.y, currentTurn) > 0) {
-						PlaceDisk(cursorPos.x, cursorPos.y, currentTurn);
-						currentTurn = NextTurn(currentTurn);
+						photonView.RPC(nameof(PlaceDisk), RpcTarget.All, cursorPos.x, cursorPos.y, currentTurn, false);
+						photonView.RPC(nameof(ChangeTurn), RpcTarget.All);
 					}
 				} else if (Input.GetMouseButtonDown(0)) {
 					Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
@@ -94,15 +95,15 @@ public class GameController : MonoBehaviour {
 						int x = Mathf.FloorToInt((grid.transform.lossyScale.x / 2.0f + raycastHit.point.x - this.transform.position.x) / unitLength);
 						int y = Mathf.FloorToInt((grid.transform.lossyScale.y / 2.0f + raycastHit.point.y - this.transform.position.y) / unitLength);
 						if (CountTurnoverOnPlace(x, y, currentTurn) > 0) {
-							PlaceDisk(x, y, currentTurn);
-							currentTurn = NextTurn(currentTurn);
+							photonView.RPC(nameof(PlaceDisk), RpcTarget.All, x, y, currentTurn, false);
+							photonView.RPC(nameof(ChangeTurn), RpcTarget.All);
 						}
 					}
 				}
-			} else {
+			} else if (PhotonNetwork.OfflineMode) {
 				var (x, y) = listPlaceablePosition.RandomElement();
 				PlaceDisk(x, y, currentTurn);
-				currentTurn = NextTurn(currentTurn);
+				ChangeTurn();
 			}
 		}
 	}
@@ -135,7 +136,6 @@ public class GameController : MonoBehaviour {
 		countBlackDisk = 0;
 		countWhiteDisk = 0;
 		currentTurn = DiskColor.Black;
-		playerColor = EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White);
 		arrayColor = new DiskColor[fracX, fracY];
 		for (int i = 0; i < fracX; i++) {
 			for (int j = 0; j < fracY; j++) {
@@ -218,6 +218,7 @@ public class GameController : MonoBehaviour {
 		return _result;
 	}
 
+	[PunRPC]
 	void PlaceDisk(int _x, int _y, DiskColor _c, bool mute = false) {
 		if (_c == DiskColor.None) {
 			return;
@@ -270,6 +271,11 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
+	[PunRPC]
+	private void ChangeTurn() {
+		currentTurn = NextTurn(currentTurn);
+	}
+	
 	DiskColor NextTurn(DiskColor turn) {
 		RefreshPlaceablePosition(turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
 		if (listPlaceablePosition.Count == 0) {
@@ -321,7 +327,7 @@ public class GameController : MonoBehaviour {
 				if (countBlackDisk == countWhiteDisk) {
 					sb.Append("引き分けでした。");
 				} else {
-					if ((playerColor == DiskColor.Black) == (countBlackDisk > countWhiteDisk)) {
+					if ((GameStateSingleton.instance.playerColor == DiskColor.Black) == (countBlackDisk > countWhiteDisk)) {
 						sb.Append("勝ちました！");
 					} else {
 						sb.Append("負けました……");

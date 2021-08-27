@@ -1,9 +1,12 @@
-﻿using TMPro;
+﻿using ExitGames.Client.Photon;
+using Photon.Pun;
+using Photon.Realtime;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class TitleController : MonoBehaviour {
+public class TitleController : MonoBehaviourPunCallbacks {
 	[SerializeField] private GameObject fracXSlider;
 	[SerializeField] private GameObject fracYSlider;
 
@@ -12,8 +15,25 @@ public class TitleController : MonoBehaviour {
 		fracYSlider.GetComponent<Slider>().value = GameStateSingleton.instance.fracY;
 	}
 
-	public void OnStartButtonClick() {
+	public void OnSoloplayButtonClick() {
+		GameStateSingleton.instance.playerColor = EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White);
+		PhotonNetwork.OfflineMode = true;
 		SceneManager.LoadSceneAsync("MainScene", LoadSceneMode.Single);
+	}
+
+	public override void OnConnectedToMaster() {
+		if (PhotonNetwork.OfflineMode) {
+			PhotonNetwork.CreateRoom(null, new RoomOptions {MaxPlayers = 1}, TypedLobby.Default);
+			PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable {
+				{"color", EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White)}
+			});
+		}	
+	}
+	
+	public void OnMultiplayButtonClick() {
+		PhotonNetwork.OfflineMode = false;
+		PhotonNetwork.ConnectUsingSettings();
+		SceneManager.LoadSceneAsync("ConnectScene", LoadSceneMode.Single);
 	}
 
 	public void OnChangeFracXSlider() {

@@ -1,2 +1,3 @@
 /Assets/TextMesh[[:space:]]Pro/** linguist-vendored
+/Assets/Photon/** linguist-vendored
 *.jslib linguist-language=JavaScript
