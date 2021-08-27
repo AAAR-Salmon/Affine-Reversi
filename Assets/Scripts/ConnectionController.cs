@@ -16,8 +16,22 @@ public class ConnectionController : MonoBehaviourPunCallbacks {
 	[SerializeField] private Button matchmakingPrivateButton;
 
 	static ConnectionController() {
-		FreeRoomOptions = new RoomOptions {MaxPlayers = 2, CustomRoomProperties = new Hashtable {{"IsFree", true}}};
-		PrivateRoomOptions = new RoomOptions {MaxPlayers = 2, CustomRoomProperties = new Hashtable {{"IsFree", false}}};
+		FreeRoomOptions = new RoomOptions {
+			MaxPlayers = 2,
+			CustomRoomProperties = new Hashtable {
+				{"IsFree", true},
+				{"fracX", GameStateSingleton.Instance.FracX},
+				{"fracY", GameStateSingleton.Instance.FracY}
+			}
+		};
+		PrivateRoomOptions = new RoomOptions {
+			MaxPlayers = 2,
+			CustomRoomProperties = new Hashtable {
+				{"IsFree", false},
+				{"fracX", GameStateSingleton.Instance.FracX},
+				{"fracY", GameStateSingleton.Instance.FracY}
+			}
+		};
 	}
 
 	private void Start() {
@@ -26,17 +40,16 @@ public class ConnectionController : MonoBehaviourPunCallbacks {
 	}
 
 	public void DoMatchmakingFree() {
-		GameStateSingleton.Instance.PlayerName = playerNameTmpInput.text;
 		PhotonNetwork.JoinRandomOrCreateRoom(roomOptions: FreeRoomOptions);
 	}
 
 	public void DoMatchmakingPrivate() {
-		GameStateSingleton.Instance.PlayerName = playerNameTmpInput.text;
 		PhotonNetwork.JoinOrCreateRoom(roomNameTmpInput.text, PrivateRoomOptions, TypedLobby.Default);
 	}
 
 	public void OnEnterPlayerName() {
 		PhotonNetwork.LocalPlayer.NickName = playerNameTmpInput.text;
+		GameStateSingleton.Instance.PlayerName = playerNameTmpInput.text;
 	}
 
 	public void OnChangeRoomName() {

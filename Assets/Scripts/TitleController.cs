@@ -28,9 +28,9 @@ public class TitleController : MonoBehaviourPunCallbacks {
 			PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable {
 				{"color", EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White)}
 			});
-		}	
+		}
 	}
-	
+
 	public void OnMultiPlayButtonClick() {
 		PhotonNetwork.OfflineMode = false;
 		PhotonNetwork.ConnectUsingSettings();
@@ -39,11 +39,13 @@ public class TitleController : MonoBehaviourPunCallbacks {
 
 	public void OnChangeFracXSlider() {
 		GameStateSingleton.Instance.FracX = Mathf.FloorToInt(fracXSlider.GetComponent<Slider>().value);
-		fracXSlider.transform.Find("Value Indicator").GetComponent<TextMeshProUGUI>().text = Mathf.FloorToInt(fracXSlider.GetComponent<Slider>().value).ToString();
+		fracXSlider.transform.Find("Value Indicator").GetComponent<TextMeshProUGUI>().text =
+			Mathf.FloorToInt(fracXSlider.GetComponent<Slider>().value).ToString();
 	}
 
 	public void OnChangeFracYSlider() {
 		GameStateSingleton.Instance.FracY = Mathf.FloorToInt(fracYSlider.GetComponent<Slider>().value);
-		fracYSlider.transform.Find("Value Indicator").GetComponent<TextMeshProUGUI>().text = Mathf.FloorToInt(fracYSlider.GetComponent<Slider>().value).ToString();
+		fracYSlider.transform.Find("Value Indicator").GetComponent<TextMeshProUGUI>().text =
+			Mathf.FloorToInt(fracYSlider.GetComponent<Slider>().value).ToString();
 	}
 }

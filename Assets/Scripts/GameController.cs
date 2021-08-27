@@ -1,5 +1,6 @@
 ﻿using Enum;
 using Photon.Pun;
+using Photon.Realtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,12 +12,15 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using static Enum.DiskColor;
 
-public class GameController : MonoBehaviour {
+public class GameController : MonoBehaviourPunCallbacks {
 	private DiskColor _currentTurn = Black;
 	private bool _isGameFinished;
+	private DiskColor _playerSurrenderColor = None;
 	[SerializeField] private GameObject cursor;
 	[SerializeField] private TextMeshProUGUI scoreBlackUI;
 	[SerializeField] private TextMeshProUGUI scoreWhiteUI;
+	[SerializeField] private TextMeshProUGUI playerNameBlackUi;
+	[SerializeField] private TextMeshProUGUI playerNameWhiteUi;
 	[SerializeField] private GameObject diskPrefab;
 	[SerializeField] private GameObject placeableHintPrefab;
 	[SerializeField] private GameObject grid;
@@ -40,6 +44,9 @@ public class GameController : MonoBehaviour {
 	private float _offsetX;
 	private float _offsetY;
 	private float _unitLength;
+	[SerializeField] private GameObject clearButton;
+	[SerializeField] private GameObject exitButton;
+	[SerializeField] private GameObject surrenderButton;
 	[SerializeField] private GameObject twitterShareButton;
 	[SerializeField] private Camera mainCamera;
 	private PhotonView _photonView;
@@ -59,8 +66,33 @@ public class GameController : MonoBehaviour {
 
 	// Start is called before the first frame update
 	private void Start() {
-		_photonView = GetComponent<PhotonView>();
-		GameStateSingleton.Instance.PlayerColor = (DiskColor)PhotonNetwork.LocalPlayer.CustomProperties["color"];
+		_photonView = PhotonView.Get(this);
+		GameStateSingleton.Instance.PlayerColor = (DiskColor) PhotonNetwork.LocalPlayer.CustomProperties["color"];
+
+		clearButton.SetActive(PhotonNetwork.OfflineMode);
+		exitButton.SetActive(PhotonNetwork.OfflineMode);
+		surrenderButton.SetActive(!PhotonNetwork.OfflineMode);
+		
+		if (!PhotonNetwork.OfflineMode) {
+			GameStateSingleton.Instance.OppositePlayerName = PhotonNetwork.PlayerListOthers[0].NickName;
+		}
+
+		switch (GameStateSingleton.Instance.PlayerColor) {
+		case Black:
+			playerNameBlackUi.text = GameStateSingleton.Instance.PlayerName;
+			playerNameWhiteUi.text = GameStateSingleton.Instance.OppositePlayerName;
+			break;
+		case White:
+			playerNameBlackUi.text = GameStateSingleton.Instance.OppositePlayerName;
+			playerNameWhiteUi.text = GameStateSingleton.Instance.PlayerName;
+			break;
+		}
+
+		if (!PhotonNetwork.OfflineMode && !PhotonNetwork.IsMasterClient) {
+			GameStateSingleton.Instance.FracX = (int) PhotonNetwork.CurrentRoom.CustomProperties["fracX"];
+			GameStateSingleton.Instance.FracY = (int) PhotonNetwork.CurrentRoom.CustomProperties["fracY"];
+		}
+
 		ResizeBoard(GameStateSingleton.Instance.FracX, GameStateSingleton.Instance.FracY);
 		Init();
 	}
@@ -72,14 +104,17 @@ public class GameController : MonoBehaviour {
 			_cursorPos.y = (_cursorPos.y + 1) % _fracY;
 			cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
 		}
+
 		if (Input.GetKeyDown(KeyCode.DownArrow)) {
 			_cursorPos.y = (_cursorPos.y + _fracY - 1) % _fracY;
 			cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
 		}
+
 		if (Input.GetKeyDown(KeyCode.LeftArrow)) {
 			_cursorPos.x = (_cursorPos.x + _fracX - 1) % _fracX;
 			cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
 		}
+
 		if (Input.GetKeyDown(KeyCode.RightArrow)) {
 			_cursorPos.x = (_cursorPos.x + 1) % _fracX;
 			cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
@@ -88,6 +123,7 @@ public class GameController : MonoBehaviour {
 		if (_isGameFinished) {
 			return;
 		}
+
 		if (_currentTurn == GameStateSingleton.Instance.PlayerColor) {
 			// 石を置いて色を変更する
 			if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
@@ -125,7 +161,7 @@ public class GameController : MonoBehaviour {
 		_unitLength = gridBaseScale / (Mathf.Max(fracX, fracY) + lineWeight);
 		_offsetX = -(fracX - 1.0f) / 2.0f * _unitLength;
 		_offsetY = -(fracY - 1.0f) / 2.0f * _unitLength;
-		grid.transform.localScale = 
+		grid.transform.localScale =
 			new Vector3(_unitLength * (fracX + lineWeight), _unitLength * (fracY + lineWeight), 1);
 		diskPrefab.transform.localScale = new Vector3(_unitLength * 0.8f, _unitLength * 0.8f, 1);
 		placeableHintPrefab.transform.localScale = new Vector3(_unitLength * 0.3f, _unitLength * 0.3f, 1);
@@ -148,6 +184,7 @@ public class GameController : MonoBehaviour {
 				_arrayColor[i, j] = None;
 			}
 		}
+
 		_dictionaryDiskInstance = new Dictionary<(int, int), GameObject>();
 		PlaceDisk((_fracX - 1) / 2, (_fracY - 1) / 2, Black, true);
 		PlaceDisk((_fracX - 1) / 2 + 1, (_fracY - 1) / 2 + 1, Black, true);
@@ -158,7 +195,7 @@ public class GameController : MonoBehaviour {
 		cursor.GetComponent<SpriteRenderer>().color = colorCursorBlack;
 		cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
 		RefreshPlaceablePosition(_currentTurn);
-		RefreshPlaceableHint();
+		RefreshPlaceableHint(_currentTurn);
 		twitterShareButton.SetActive(false);
 	}
 
@@ -167,6 +204,7 @@ public class GameController : MonoBehaviour {
 		foreach (var pair in _dictionaryDiskInstance) {
 			Destroy(pair.Value);
 		}
+
 		_dictionaryDiskInstance = null;
 	}
 
@@ -182,11 +220,16 @@ public class GameController : MonoBehaviour {
 		}
 	}
 
-	private void RefreshPlaceableHint() {
+	private void RefreshPlaceableHint(DiskColor turn) {
 		foreach (var obj in _listPlaceableHint) {
 			Destroy(obj);
 		}
+
 		_listPlaceableHint.Clear();
+		if (turn != GameStateSingleton.Instance.PlayerColor) {
+			return;
+		}
+
 		foreach (var (x, y) in _listPlaceablePosition) {
 			_listPlaceableHint.Add(Instantiate(placeableHintPrefab,
 				this.transform.position + Vector3FromInt3(x, y, 0),
@@ -199,18 +242,21 @@ public class GameController : MonoBehaviour {
 		return new Vector3(_offsetX + _unitLength * x, _offsetY + _unitLength * y, z);
 	}
 
-	int CountTurnoverOnPlace(int x, int y, DiskColor diskColor) {
+	private int CountTurnoverOnPlace(int x, int y, DiskColor diskColor) {
 		if (!InBoardArea(x, y)) {
 			return 0;
 		}
+
 		if (_arrayColor[x, y] != None) {
 			return 0;
 		}
+
 		if (diskColor == None) {
 			return 0;
 		}
+
 		int result = 0;
-		(int, int)[] dPos = { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
+		(int, int)[] dPos = {(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)};
 		foreach (var (dx, dy) in dPos) {
 			int i = x + dx;
 			int j = y + dy;
@@ -220,10 +266,12 @@ public class GameController : MonoBehaviour {
 				j += dy;
 				distance++;
 			}
+
 			if (InBoardArea(i, j) && _arrayColor[i, j] == diskColor) {
 				result += distance - 1;
 			}
 		}
+
 		return result;
 	}
 
@@ -232,6 +280,7 @@ public class GameController : MonoBehaviour {
 		if (diskColor == None) {
 			return;
 		}
+
 		Color color = Color.magenta;
 		switch (diskColor) {
 		case Black:
@@ -259,7 +308,7 @@ public class GameController : MonoBehaviour {
 		newDisk.GetComponent<SpriteRenderer>().color = color;
 		_dictionaryDiskInstance.Add((x, y), newDisk);
 
-		(int, int)[] dPos = { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
+		(int, int)[] dPos = {(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)};
 		foreach (var (dx, dy) in dPos) {
 			int i = x + dx;
 			int j = y + dy;
@@ -267,6 +316,7 @@ public class GameController : MonoBehaviour {
 				i += dx;
 				j += dy;
 			}
+
 			if (InBoardArea(i, j) && _arrayColor[i, j] == diskColor) {
 				while ((i -= dx, j -= dy) != (x, y)) {
 					_arrayColor[i, j] = diskColor;
@@ -274,6 +324,7 @@ public class GameController : MonoBehaviour {
 				}
 			}
 		}
+
 		if (!mute) {
 			this.GetComponent<AudioSource>().PlayOneShot(putDiskSoundEffect.RandomElement());
 		}
@@ -290,8 +341,7 @@ public class GameController : MonoBehaviour {
 			RefreshPlaceablePosition(turn);
 			if (_listPlaceablePosition.Count == 0) {
 				// 両者置けない場合
-				_isGameFinished = true;
-				twitterShareButton.SetActive(true);
+				FinishGame();
 			} else {
 				// パスが起こり自分の手番が続く場合
 				;
@@ -300,10 +350,11 @@ public class GameController : MonoBehaviour {
 			// パスが起こらず相手に手番が移る場合
 			turn = (turn == Black ? White : Black);
 		}
+
 		scoreBlackUI.text = _countBlackDisk.ToString();
 		scoreWhiteUI.text = _countWhiteDisk.ToString();
 		cursor.GetComponent<SpriteRenderer>().color = (turn == Black ? colorCursorBlack : colorCursorWhite);
-		RefreshPlaceableHint();
+		RefreshPlaceableHint(turn);
 		return turn;
 	}
 
@@ -318,7 +369,26 @@ public class GameController : MonoBehaviour {
 
 	public void OnClickExitButton() {
 		Clear();
+		PhotonNetwork.Disconnect();
 		SceneManager.LoadSceneAsync("TitleScene", LoadSceneMode.Single);
+	}
+
+	public void OnClickSurrenderButton() {
+		_photonView.RPC(nameof(FinishGame), RpcTarget.All, GameStateSingleton.Instance.PlayerColor);
+	}
+
+	[PunRPC]
+	private void FinishGame(DiskColor playerSurrenderColor = None) {
+		_playerSurrenderColor = playerSurrenderColor;
+		_isGameFinished = true;
+		twitterShareButton.SetActive(true);
+		exitButton.SetActive(true);
+		surrenderButton.SetActive(false);
+	}
+
+	public override void OnPlayerLeftRoom(Player otherPlayer) {
+		DiskColor colorOtherPlayer = (DiskColor) otherPlayer.CustomProperties["color"];
+		FinishGame(colorOtherPlayer);
 	}
 
 	public void ShareTwitter() {
@@ -328,23 +398,33 @@ public class GameController : MonoBehaviour {
 				query.Add("url", "https://unityroom.com/games/scalable-reversi");
 				query.Add("hashtags", "クソデカリバーシ");
 				StringBuilder sb = new StringBuilder();
+				sb.Append(GameStateSingleton.Instance.OppositePlayerName);
+				sb.Append("と対戦し、");
 				sb.Append(_countBlackDisk);
 				sb.Append("-");
 				sb.Append(_countWhiteDisk);
-				sb.Append("で");
-				if (_countBlackDisk == _countWhiteDisk) {
-					sb.Append("引き分けでした。");
-				} else {
-					if ((GameStateSingleton.Instance.PlayerColor == Black) == (_countBlackDisk > _countWhiteDisk)) {
-						sb.Append("勝ちました！");
+				if (_playerSurrenderColor != None) {
+					sb.Append("でしたが、");
+					if (_playerSurrenderColor == GameStateSingleton.Instance.PlayerColor) {
+						sb.Append("投了しました。");
 					} else {
-						sb.Append("負けました……");
+						sb.Append("相手が投了しました。");
+					}
+				} else {
+					sb.Append("で");
+					if (_countBlackDisk == _countWhiteDisk) {
+						sb.Append("引き分けでした。");
+					} else {
+						if ((GameStateSingleton.Instance.PlayerColor == Black) == (_countBlackDisk > _countWhiteDisk)) {
+							sb.Append("勝ちました！");
+						} else {
+							sb.Append("負けました……");
+						}
 					}
 				}
+
 				query.Add("text", sb.ToString());
-				return new UriBuilder("https://twitter.com/intent/tweet") {
-					Query = query.ToString()
-				}.Uri.ToString();
+				return new UriBuilder("https://twitter.com/intent/tweet") {Query = query.ToString()}.Uri.ToString();
 			})()
 		);
 	}
