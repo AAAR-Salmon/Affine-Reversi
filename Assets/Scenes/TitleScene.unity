@@ -208,7 +208,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 275835417}
         m_TargetAssemblyTypeName: TitleController, Assembly-CSharp
-        m_MethodName: OnSoloplayButtonClick
+        m_MethodName: OnSoloPlayButtonClick
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -799,7 +799,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 275835417}
         m_TargetAssemblyTypeName: TitleController, Assembly-CSharp
-        m_MethodName: OnMultiplayButtonClick
+        m_MethodName: OnMultiPlayButtonClick
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

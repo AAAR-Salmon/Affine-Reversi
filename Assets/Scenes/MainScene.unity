@@ -1542,7 +1542,7 @@ MonoBehaviour:
   colorCursorWhite: {r: 0.8, g: 0.8, b: 0.8, a: 1}
   lineWeight: 0.07
   gridBaseScale: 8
-  putDiskSE:
+  putDiskSoundEffect:
   - {fileID: 8300000, guid: 533328443b647e04a87deed01ba375b9, type: 3}
   - {fileID: 8300000, guid: ee41d18a6d8c1e448be187797fb9abc1, type: 3}
   - {fileID: 8300000, guid: 3c2c363280bf5204298a89c71f32c4e1, type: 3}

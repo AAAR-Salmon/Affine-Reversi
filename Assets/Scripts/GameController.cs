@@ -1,4 +1,5 @@
-﻿using Photon.Pun;
+﻿using Enum;
+using Photon.Pun;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,281 +9,288 @@ using System.Web;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static Enum.DiskColor;
 
 public class GameController : MonoBehaviour {
-	private DiskColor currentTurn = DiskColor.Black;
-	private bool isGameFinished;
+	private DiskColor _currentTurn = Black;
+	private bool _isGameFinished;
 	[SerializeField] private GameObject cursor;
 	[SerializeField] private TextMeshProUGUI scoreBlackUI;
 	[SerializeField] private TextMeshProUGUI scoreWhiteUI;
 	[SerializeField] private GameObject diskPrefab;
 	[SerializeField] private GameObject placeableHintPrefab;
 	[SerializeField] private GameObject grid;
-	private MaterialPropertyBlock gridMaterialPropertyBlock;
-	private (int x, int y) cursorPos = (0, 0);
-	private DiskColor[,] arrayColor;
-	private Dictionary<(int, int), GameObject> dictionaryDiskInstance;
-	private List<GameObject> listPlaceableHint;
-	private List<(int, int)> listPlaceablePosition;
-	private int countBlackDisk;
-	private int countWhiteDisk;
+	private MaterialPropertyBlock _gridMaterialPropertyBlock;
+	private (int x, int y) _cursorPos = (0, 0);
+	private DiskColor[,] _arrayColor;
+	private Dictionary<(int, int), GameObject> _dictionaryDiskInstance;
+	private List<GameObject> _listPlaceableHint;
+	private List<(int, int)> _listPlaceablePosition;
+	private int _countBlackDisk;
+	private int _countWhiteDisk;
 	[SerializeField] private Color colorDiskBlack = Color.black;
 	[SerializeField] private Color colorDiskWhite = Color.white;
 	[SerializeField] private Color colorCursorBlack = Color.black;
 	[SerializeField] private Color colorCursorWhite = Color.white;
 	[SerializeField] private float lineWeight = 0.07f;
 	[SerializeField] private float gridBaseScale = 8.0f;
-	[SerializeField] private AudioClip[] putDiskSE;
-	private int fracX;
-	private int fracY;
-	private float offsetX;
-	private float offsetY;
-	private float unitLength;
+	[SerializeField] private AudioClip[] putDiskSoundEffect;
+	private int _fracX;
+	private int _fracY;
+	private float _offsetX;
+	private float _offsetY;
+	private float _unitLength;
 	[SerializeField] private GameObject twitterShareButton;
 	[SerializeField] private Camera mainCamera;
-	private PhotonView photonView;
+	private PhotonView _photonView;
+	private static readonly int FracX = Shader.PropertyToID("_FracX");
+	private static readonly int FracY = Shader.PropertyToID("_FracY");
+	private static readonly int LineWeight = Shader.PropertyToID("_LineWeight");
 
 #if UNITY_WEBGL
 	[DllImport("__Internal")]
 	private static extern void DownloadPNG(byte[] bytes, int size);
 #endif
 
-	void Awake() {
-		listPlaceablePosition = new List<(int, int)>();
-		listPlaceableHint = new List<GameObject>();
+	private void Awake() {
+		_listPlaceablePosition = new List<(int, int)>();
+		_listPlaceableHint = new List<GameObject>();
 	}
 
 	// Start is called before the first frame update
-	void Start() {
-		photonView = GetComponent<PhotonView>();
-		GameStateSingleton.instance.playerColor = (DiskColor)PhotonNetwork.LocalPlayer.CustomProperties["color"];
-		ResizeBoard(GameStateSingleton.instance.fracX, GameStateSingleton.instance.fracY);
+	private void Start() {
+		_photonView = GetComponent<PhotonView>();
+		GameStateSingleton.Instance.PlayerColor = (DiskColor)PhotonNetwork.LocalPlayer.CustomProperties["color"];
+		ResizeBoard(GameStateSingleton.Instance.FracX, GameStateSingleton.Instance.FracY);
 		Init();
 	}
 
 	// Update is called once per frame
-	void Update() {
+	private void Update() {
 		// キー入力による移動
 		if (Input.GetKeyDown(KeyCode.UpArrow)) {
-			cursorPos.y = (cursorPos.y + 1) % fracY;
-			cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
+			_cursorPos.y = (_cursorPos.y + 1) % _fracY;
+			cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
 		}
 		if (Input.GetKeyDown(KeyCode.DownArrow)) {
-			cursorPos.y = (cursorPos.y + fracY - 1) % fracY;
-			cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
+			_cursorPos.y = (_cursorPos.y + _fracY - 1) % _fracY;
+			cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
 		}
 		if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-			cursorPos.x = (cursorPos.x + fracX - 1) % fracX;
-			cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
+			_cursorPos.x = (_cursorPos.x + _fracX - 1) % _fracX;
+			cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
 		}
 		if (Input.GetKeyDown(KeyCode.RightArrow)) {
-			cursorPos.x = (cursorPos.x + 1) % fracX;
-			cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
+			_cursorPos.x = (_cursorPos.x + 1) % _fracX;
+			cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
 		}
 
-		if (!isGameFinished) {
-			if (currentTurn == GameStateSingleton.instance.playerColor) {
-				// 石を置いて色を変更する
-				if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
-					if (CountTurnoverOnPlace(cursorPos.x, cursorPos.y, currentTurn) > 0) {
-						photonView.RPC(nameof(PlaceDisk), RpcTarget.All, cursorPos.x, cursorPos.y, currentTurn, false);
-						photonView.RPC(nameof(ChangeTurn), RpcTarget.All);
-					}
-				} else if (Input.GetMouseButtonDown(0)) {
-					Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-					RaycastHit2D raycastHit = Physics2D.Raycast(ray.origin, ray.direction);
-					if (!(raycastHit.collider is null)) {
-						int x = Mathf.FloorToInt((grid.transform.lossyScale.x / 2.0f + raycastHit.point.x - this.transform.position.x) / unitLength);
-						int y = Mathf.FloorToInt((grid.transform.lossyScale.y / 2.0f + raycastHit.point.y - this.transform.position.y) / unitLength);
-						if (CountTurnoverOnPlace(x, y, currentTurn) > 0) {
-							photonView.RPC(nameof(PlaceDisk), RpcTarget.All, x, y, currentTurn, false);
-							photonView.RPC(nameof(ChangeTurn), RpcTarget.All);
-						}
-					}
+		if (_isGameFinished) {
+			return;
+		}
+		if (_currentTurn == GameStateSingleton.Instance.PlayerColor) {
+			// 石を置いて色を変更する
+			if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) {
+				if (CountTurnoverOnPlace(_cursorPos.x, _cursorPos.y, _currentTurn) > 0) {
+					_photonView.RPC(nameof(PlaceDisk), RpcTarget.All, _cursorPos.x, _cursorPos.y, _currentTurn, false);
+					_photonView.RPC(nameof(ChangeTurn), RpcTarget.All);
 				}
-			} else if (PhotonNetwork.OfflineMode) {
-				var (x, y) = listPlaceablePosition.RandomElement();
-				PlaceDisk(x, y, currentTurn);
-				ChangeTurn();
+			} else if (Input.GetMouseButtonDown(0)) {
+				Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+				RaycastHit2D raycastHit = Physics2D.Raycast(ray.origin, ray.direction);
+				if (raycastHit.collider is null) {
+					return;
+				}
+
+				var lossyScale = grid.transform.lossyScale;
+				var position = this.transform.position;
+				int x = Mathf.FloorToInt((lossyScale.x / 2.0f + raycastHit.point.x - position.x) / _unitLength);
+				int y = Mathf.FloorToInt((lossyScale.y / 2.0f + raycastHit.point.y - position.y) / _unitLength);
+				if (CountTurnoverOnPlace(x, y, _currentTurn) > 0) {
+					_photonView.RPC(nameof(PlaceDisk), RpcTarget.All, x, y, _currentTurn, false);
+					_photonView.RPC(nameof(ChangeTurn), RpcTarget.All);
+				}
 			}
+		} else if (PhotonNetwork.OfflineMode) {
+			var (x, y) = _listPlaceablePosition.RandomElement();
+			PlaceDisk(x, y, _currentTurn);
+			ChangeTurn();
 		}
 	}
 
-	private IEnumerator SimpleDelayColoutine(float timeSeconds, System.Action action) {
-		yield return new WaitForSeconds(timeSeconds);
-		action();
+	private void ResizeBoard(int fracX, int fracY) {
+		_fracX = fracX;
+		_fracY = fracY;
+
+		_unitLength = gridBaseScale / (Mathf.Max(fracX, fracY) + lineWeight);
+		_offsetX = -(fracX - 1.0f) / 2.0f * _unitLength;
+		_offsetY = -(fracY - 1.0f) / 2.0f * _unitLength;
+		grid.transform.localScale = 
+			new Vector3(_unitLength * (fracX + lineWeight), _unitLength * (fracY + lineWeight), 1);
+		diskPrefab.transform.localScale = new Vector3(_unitLength * 0.8f, _unitLength * 0.8f, 1);
+		placeableHintPrefab.transform.localScale = new Vector3(_unitLength * 0.3f, _unitLength * 0.3f, 1);
+		cursor.transform.localScale = new Vector3(_unitLength * 0.4f, _unitLength * 0.4f, 1);
+		_gridMaterialPropertyBlock = new MaterialPropertyBlock();
+		_gridMaterialPropertyBlock.SetInt(FracX, fracX);
+		_gridMaterialPropertyBlock.SetInt(FracY, fracY);
+		_gridMaterialPropertyBlock.SetFloat(LineWeight, lineWeight);
+		grid.GetComponent<SpriteRenderer>().SetPropertyBlock(_gridMaterialPropertyBlock);
 	}
 
-	void ResizeBoard(int fracX, int fracY) {
-		this.fracX = fracX;
-		this.fracY = fracY;
-
-		unitLength = gridBaseScale / (Mathf.Max(fracX, fracY) + lineWeight);
-		offsetX = -(fracX - 1.0f) / 2.0f * unitLength;
-		offsetY = -(fracY - 1.0f) / 2.0f * unitLength;
-		grid.transform.localScale = new Vector3(unitLength * (fracX + lineWeight), unitLength * (fracY + lineWeight), 1);
-		diskPrefab.transform.localScale = new Vector3(unitLength * 0.8f, unitLength * 0.8f, 1);
-		placeableHintPrefab.transform.localScale = new Vector3(unitLength * 0.3f, unitLength * 0.3f, 1);
-		cursor.transform.localScale = new Vector3(unitLength * 0.4f, unitLength * 0.4f, 1);
-		gridMaterialPropertyBlock = new MaterialPropertyBlock();
-		gridMaterialPropertyBlock.SetInt("_FracX", fracX);
-		gridMaterialPropertyBlock.SetInt("_FracY", fracY);
-		gridMaterialPropertyBlock.SetFloat("_LineWeight", lineWeight);
-		grid.GetComponent<SpriteRenderer>().SetPropertyBlock(gridMaterialPropertyBlock);
-	}
-
-	void Init() {
-		isGameFinished = false;
-		countBlackDisk = 0;
-		countWhiteDisk = 0;
-		currentTurn = DiskColor.Black;
-		arrayColor = new DiskColor[fracX, fracY];
-		for (int i = 0; i < fracX; i++) {
-			for (int j = 0; j < fracY; j++) {
-				arrayColor[i, j] = DiskColor.None;
+	private void Init() {
+		_isGameFinished = false;
+		_countBlackDisk = 0;
+		_countWhiteDisk = 0;
+		_currentTurn = Black;
+		_arrayColor = new DiskColor[_fracX, _fracY];
+		for (int i = 0; i < _fracX; i++) {
+			for (int j = 0; j < _fracY; j++) {
+				_arrayColor[i, j] = None;
 			}
 		}
-		dictionaryDiskInstance = new Dictionary<(int, int), GameObject>();
-		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2, DiskColor.Black, true);
-		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2 + 1, DiskColor.Black, true);
-		PlaceDisk((fracX - 1) / 2, (fracY - 1) / 2 + 1, DiskColor.White, true);
-		PlaceDisk((fracX - 1) / 2 + 1, (fracY - 1) / 2, DiskColor.White, true);
-		scoreBlackUI.text = countBlackDisk.ToString();
-		scoreWhiteUI.text = countWhiteDisk.ToString();
+		_dictionaryDiskInstance = new Dictionary<(int, int), GameObject>();
+		PlaceDisk((_fracX - 1) / 2, (_fracY - 1) / 2, Black, true);
+		PlaceDisk((_fracX - 1) / 2 + 1, (_fracY - 1) / 2 + 1, Black, true);
+		PlaceDisk((_fracX - 1) / 2, (_fracY - 1) / 2 + 1, White, true);
+		PlaceDisk((_fracX - 1) / 2 + 1, (_fracY - 1) / 2, White, true);
+		scoreBlackUI.text = _countBlackDisk.ToString();
+		scoreWhiteUI.text = _countWhiteDisk.ToString();
 		cursor.GetComponent<SpriteRenderer>().color = colorCursorBlack;
-		cursor.transform.position = this.transform.position + Vector3FromInt3(cursorPos.x, cursorPos.y, -1);
-		RefreshPlaceablePosition(currentTurn);
+		cursor.transform.position = this.transform.position + Vector3FromInt3(_cursorPos.x, _cursorPos.y, -1);
+		RefreshPlaceablePosition(_currentTurn);
 		RefreshPlaceableHint();
 		twitterShareButton.SetActive(false);
 	}
 
-	void Clear() {
-		arrayColor = null;
-		foreach (var pair in dictionaryDiskInstance) {
+	private void Clear() {
+		_arrayColor = null;
+		foreach (var pair in _dictionaryDiskInstance) {
 			Destroy(pair.Value);
 		}
-		dictionaryDiskInstance = null;
+		_dictionaryDiskInstance = null;
 	}
 
 
-	void RefreshPlaceablePosition(DiskColor _c) {
-		listPlaceablePosition.Clear();
-		for (int x = 0; x < fracX; x++) {
-			for (int y = 0; y < fracY; y++) {
-				if (CountTurnoverOnPlace(x, y, _c) > 0) {
-					listPlaceablePosition.Add((x, y));
+	private void RefreshPlaceablePosition(DiskColor diskColor) {
+		_listPlaceablePosition.Clear();
+		for (int x = 0; x < _fracX; x++) {
+			for (int y = 0; y < _fracY; y++) {
+				if (CountTurnoverOnPlace(x, y, diskColor) > 0) {
+					_listPlaceablePosition.Add((x, y));
 				}
 			}
 		}
 	}
 
-	void RefreshPlaceableHint() {
-		foreach (var obj in listPlaceableHint) {
+	private void RefreshPlaceableHint() {
+		foreach (var obj in _listPlaceableHint) {
 			Destroy(obj);
 		}
-		listPlaceableHint.Clear();
-		foreach (var (x, y) in listPlaceablePosition) {
-			listPlaceableHint.Add(Instantiate(placeableHintPrefab, this.transform.position + Vector3FromInt3(x, y, 0), Quaternion.identity, this.transform));
+		_listPlaceableHint.Clear();
+		foreach (var (x, y) in _listPlaceablePosition) {
+			_listPlaceableHint.Add(Instantiate(placeableHintPrefab,
+				this.transform.position + Vector3FromInt3(x, y, 0),
+				Quaternion.identity,
+				this.transform));
 		}
 	}
 
-	Vector3 Vector3FromInt3(int _x, int _y, int _z) {
-		return new Vector3(offsetX + unitLength * _x, offsetY + unitLength * _y, _z);
+	private Vector3 Vector3FromInt3(int x, int y, int z) {
+		return new Vector3(_offsetX + _unitLength * x, _offsetY + _unitLength * y, z);
 	}
 
-	int CountTurnoverOnPlace(int _x, int _y, DiskColor _c) {
-		if (!InBoardArea(_x, _y)) {
+	int CountTurnoverOnPlace(int x, int y, DiskColor diskColor) {
+		if (!InBoardArea(x, y)) {
 			return 0;
 		}
-		if (arrayColor[_x, _y] != DiskColor.None) {
+		if (_arrayColor[x, y] != None) {
 			return 0;
 		}
-		if (_c == DiskColor.None) {
+		if (diskColor == None) {
 			return 0;
 		}
-		int _result = 0;
-		(int, int)[] dpos = new (int, int)[8] { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
-		foreach (var (dx, dy) in dpos) {
-			int x = _x + dx;
-			int y = _y + dy;
+		int result = 0;
+		(int, int)[] dPos = { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
+		foreach (var (dx, dy) in dPos) {
+			int i = x + dx;
+			int j = y + dy;
 			int distance = 1;
-			while (InBoardArea(x, y) && arrayColor[x, y] != DiskColor.None && arrayColor[x, y] != _c) {
-				x += dx;
-				y += dy;
+			while (InBoardArea(i, j) && _arrayColor[i, j] != None && _arrayColor[i, j] != diskColor) {
+				i += dx;
+				j += dy;
 				distance++;
 			}
-			if (InBoardArea(x, y) && arrayColor[x, y] == _c) {
-				_result += distance - 1;
+			if (InBoardArea(i, j) && _arrayColor[i, j] == diskColor) {
+				result += distance - 1;
 			}
 		}
-		return _result;
+		return result;
 	}
 
 	[PunRPC]
-	void PlaceDisk(int _x, int _y, DiskColor _c, bool mute = false) {
-		if (_c == DiskColor.None) {
+	private void PlaceDisk(int x, int y, DiskColor diskColor, bool mute = false) {
+		if (diskColor == None) {
 			return;
 		}
 		Color color = Color.magenta;
-		switch (_c) {
-		case DiskColor.None:
-			break;
-		case DiskColor.Black:
+		switch (diskColor) {
+		case Black:
 			color = colorDiskBlack;
 			break;
-		case DiskColor.White:
+		case White:
 			color = colorDiskWhite;
 			break;
-		default:
-			break;
 		}
 
-		int countTurnover = CountTurnoverOnPlace(_x, _y, _c);
-		if (_c == DiskColor.Black) {
-			countBlackDisk += countTurnover + 1;
-			countWhiteDisk -= countTurnover;
+		int countTurnover = CountTurnoverOnPlace(x, y, diskColor);
+		if (diskColor == Black) {
+			_countBlackDisk += countTurnover + 1;
+			_countWhiteDisk -= countTurnover;
 		} else {
-			countWhiteDisk += countTurnover + 1;
-			countBlackDisk -= countTurnover;
+			_countWhiteDisk += countTurnover + 1;
+			_countBlackDisk -= countTurnover;
 		}
 
-		arrayColor[_x, _y] = _c;
-		GameObject newDisk = Instantiate(diskPrefab, this.transform.position + Vector3FromInt3(_x, _y, 0), Quaternion.identity, this.transform);
+		_arrayColor[x, y] = diskColor;
+		GameObject newDisk = Instantiate(diskPrefab,
+			this.transform.position + Vector3FromInt3(x, y, 0),
+			Quaternion.identity,
+			this.transform);
 		newDisk.GetComponent<SpriteRenderer>().color = color;
-		dictionaryDiskInstance.Add((_x, _y), newDisk);
+		_dictionaryDiskInstance.Add((x, y), newDisk);
 
-		(int, int)[] dpos = new (int, int)[8] { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
-		foreach (var (dx, dy) in dpos) {
-			int x = _x + dx;
-			int y = _y + dy;
-			while (InBoardArea(x, y) && arrayColor[x, y] != DiskColor.None && arrayColor[x, y] != _c) {
-				x += dx;
-				y += dy;
+		(int, int)[] dPos = { (-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1) };
+		foreach (var (dx, dy) in dPos) {
+			int i = x + dx;
+			int j = y + dy;
+			while (InBoardArea(i, j) && _arrayColor[i, j] != None && _arrayColor[i, j] != diskColor) {
+				i += dx;
+				j += dy;
 			}
-			if (InBoardArea(x, y) && arrayColor[x, y] == _c) {
-				while ((x -= dx, y -= dy) != (_x, _y)) {
-					arrayColor[x, y] = _c;
-					dictionaryDiskInstance[(x, y)].GetComponent<SpriteRenderer>().color = color;
+			if (InBoardArea(i, j) && _arrayColor[i, j] == diskColor) {
+				while ((i -= dx, j -= dy) != (x, y)) {
+					_arrayColor[i, j] = diskColor;
+					_dictionaryDiskInstance[(i, j)].GetComponent<SpriteRenderer>().color = color;
 				}
 			}
 		}
 		if (!mute) {
-			this.GetComponent<AudioSource>().PlayOneShot(putDiskSE.RandomElement());
+			this.GetComponent<AudioSource>().PlayOneShot(putDiskSoundEffect.RandomElement());
 		}
 	}
 
 	[PunRPC]
 	private void ChangeTurn() {
-		currentTurn = NextTurn(currentTurn);
+		_currentTurn = NextTurn(_currentTurn);
 	}
-	
-	DiskColor NextTurn(DiskColor turn) {
-		RefreshPlaceablePosition(turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
-		if (listPlaceablePosition.Count == 0) {
+
+	private DiskColor NextTurn(DiskColor turn) {
+		RefreshPlaceablePosition(turn == Black ? White : Black);
+		if (_listPlaceablePosition.Count == 0) {
 			RefreshPlaceablePosition(turn);
-			if (listPlaceablePosition.Count == 0) {
+			if (_listPlaceablePosition.Count == 0) {
 				// 両者置けない場合
-				isGameFinished = true;
+				_isGameFinished = true;
 				twitterShareButton.SetActive(true);
 			} else {
 				// パスが起こり自分の手番が続く場合
@@ -290,17 +298,17 @@ public class GameController : MonoBehaviour {
 			}
 		} else {
 			// パスが起こらず相手に手番が移る場合
-			turn = (turn == DiskColor.Black ? DiskColor.White : DiskColor.Black);
+			turn = (turn == Black ? White : Black);
 		}
-		scoreBlackUI.text = countBlackDisk.ToString();
-		scoreWhiteUI.text = countWhiteDisk.ToString();
-		cursor.GetComponent<SpriteRenderer>().color = (turn == DiskColor.Black ? colorCursorBlack : colorCursorWhite);
+		scoreBlackUI.text = _countBlackDisk.ToString();
+		scoreWhiteUI.text = _countWhiteDisk.ToString();
+		cursor.GetComponent<SpriteRenderer>().color = (turn == Black ? colorCursorBlack : colorCursorWhite);
 		RefreshPlaceableHint();
 		return turn;
 	}
 
-	bool InBoardArea(int _x, int _y) {
-		return 0 <= _x && _x < fracX && 0 <= _y && _y < fracY;
+	private bool InBoardArea(int x, int y) {
+		return 0 <= x && x < _fracX && 0 <= y && y < _fracY;
 	}
 
 	public void OnClickClearButton() {
@@ -320,21 +328,21 @@ public class GameController : MonoBehaviour {
 				query.Add("url", "https://unityroom.com/games/scalable-reversi");
 				query.Add("hashtags", "クソデカリバーシ");
 				StringBuilder sb = new StringBuilder();
-				sb.Append(countBlackDisk);
+				sb.Append(_countBlackDisk);
 				sb.Append("-");
-				sb.Append(countWhiteDisk);
+				sb.Append(_countWhiteDisk);
 				sb.Append("で");
-				if (countBlackDisk == countWhiteDisk) {
+				if (_countBlackDisk == _countWhiteDisk) {
 					sb.Append("引き分けでした。");
 				} else {
-					if ((GameStateSingleton.instance.playerColor == DiskColor.Black) == (countBlackDisk > countWhiteDisk)) {
+					if ((GameStateSingleton.Instance.PlayerColor == Black) == (_countBlackDisk > _countWhiteDisk)) {
 						sb.Append("勝ちました！");
 					} else {
 						sb.Append("負けました……");
 					}
 				}
 				query.Add("text", sb.ToString());
-				return new System.UriBuilder("https://twitter.com/intent/tweet") {
+				return new UriBuilder("https://twitter.com/intent/tweet") {
 					Query = query.ToString()
 				}.Uri.ToString();
 			})()

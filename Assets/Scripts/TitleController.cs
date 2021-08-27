@@ -1,4 +1,5 @@
-﻿using ExitGames.Client.Photon;
+﻿using Enum;
+using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
@@ -10,13 +11,13 @@ public class TitleController : MonoBehaviourPunCallbacks {
 	[SerializeField] private GameObject fracXSlider;
 	[SerializeField] private GameObject fracYSlider;
 
-	void Start() {
-		fracXSlider.GetComponent<Slider>().value = GameStateSingleton.instance.fracX;
-		fracYSlider.GetComponent<Slider>().value = GameStateSingleton.instance.fracY;
+	private void Start() {
+		fracXSlider.GetComponent<Slider>().value = GameStateSingleton.Instance.FracX;
+		fracYSlider.GetComponent<Slider>().value = GameStateSingleton.Instance.FracY;
 	}
 
-	public void OnSoloplayButtonClick() {
-		GameStateSingleton.instance.playerColor = EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White);
+	public void OnSoloPlayButtonClick() {
+		GameStateSingleton.Instance.PlayerColor = EnumerableExtensions.ChooseRandom(DiskColor.Black, DiskColor.White);
 		PhotonNetwork.OfflineMode = true;
 		SceneManager.LoadSceneAsync("MainScene", LoadSceneMode.Single);
 	}
@@ -30,19 +31,19 @@ public class TitleController : MonoBehaviourPunCallbacks {
 		}	
 	}
 	
-	public void OnMultiplayButtonClick() {
+	public void OnMultiPlayButtonClick() {
 		PhotonNetwork.OfflineMode = false;
 		PhotonNetwork.ConnectUsingSettings();
 		SceneManager.LoadSceneAsync("ConnectScene", LoadSceneMode.Single);
 	}
 
 	public void OnChangeFracXSlider() {
-		GameStateSingleton.instance.fracX = Mathf.FloorToInt(fracXSlider.GetComponent<Slider>().value);
+		GameStateSingleton.Instance.FracX = Mathf.FloorToInt(fracXSlider.GetComponent<Slider>().value);
 		fracXSlider.transform.Find("Value Indicator").GetComponent<TextMeshProUGUI>().text = Mathf.FloorToInt(fracXSlider.GetComponent<Slider>().value).ToString();
 	}
 
 	public void OnChangeFracYSlider() {
-		GameStateSingleton.instance.fracY = Mathf.FloorToInt(fracYSlider.GetComponent<Slider>().value);
+		GameStateSingleton.Instance.FracY = Mathf.FloorToInt(fracYSlider.GetComponent<Slider>().value);
 		fracYSlider.transform.Find("Value Indicator").GetComponent<TextMeshProUGUI>().text = Mathf.FloorToInt(fracYSlider.GetComponent<Slider>().value).ToString();
 	}
 }

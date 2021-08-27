@@ -1,5 +1,7 @@
-﻿public enum DiskColor {
-	None,
-	Black,
-	White
+﻿namespace Enum {
+	public enum DiskColor {
+		None,
+		Black,
+		White
+	}
 }

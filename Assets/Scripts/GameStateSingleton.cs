@@ -1,24 +1,21 @@
-﻿public class GameStateSingleton {
+﻿using Enum;
+
+public class GameStateSingleton {
 	private static GameStateSingleton _instance;
 
-	public int fracX;
-	public int fracY;
-	public DiskColor playerColor;
-	public string playerName;
+	public int FracX;
+	public int FracY;
+	public DiskColor PlayerColor;
+	public string PlayerName;
+	public string OppositePlayerName;
 
-	public static GameStateSingleton instance {
-		get {
-			if (_instance == null) {
-				_instance = new GameStateSingleton();
-			}
-			return _instance;
-		}
-	}
+	public static GameStateSingleton Instance => _instance ??= new GameStateSingleton();
 
 	private GameStateSingleton() {
-		fracX = 8;
-		fracY = 8;
-		playerColor = DiskColor.Black;
-		playerName = "player";
+		FracX = 8;
+		FracY = 8;
+		PlayerColor = DiskColor.Black;
+		PlayerName = "Player";
+		OppositePlayerName = "CPU";
 	}
 }
