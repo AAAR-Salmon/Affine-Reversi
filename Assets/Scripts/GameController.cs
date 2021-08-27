@@ -388,8 +388,10 @@ public class GameController : MonoBehaviourPunCallbacks {
 	}
 
 	public override void OnPlayerLeftRoom(Player otherPlayer) {
-		DiskColor colorOtherPlayer = (DiskColor) otherPlayer.CustomProperties["color"];
-		FinishGame(colorOtherPlayer);
+		if (!_isGameFinished) {
+			DiskColor colorOtherPlayer = (DiskColor) otherPlayer.CustomProperties["color"];
+			FinishGame(colorOtherPlayer);
+		}
 	}
 
 	public void ShareTwitter() {
